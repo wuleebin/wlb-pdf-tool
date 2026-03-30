@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>WLBpdf工具包 · 专业版 | 图片转PDF | 合并PDF | PDF转图片</title>
+    <!-- PDF.js 核心库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- pdf-lib 用于合并PDF -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <!-- SortableJS 拖拽排序增强 -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Font Awesome 6 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Noto Sans', sans-serif;
+        }
+        body {
+            background: #f0f4fa;
+            margin: 0;
+            padding: 28px 20px 60px 20px;
+            color: #0a1c2f;
+        }
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+        .tool-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(145deg, #0f2b3d, #1e4a6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin: 0;
+            letter-spacing: -0.3px;
+        }
+        .version-badge {
+            background: #e9eef3;
+            padding: 4px 12px;
+            border-radius: 60px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #2c5a7a;
+        }
+        .sub {
+            color: #3a5a78;
+            margin-bottom: 28px;
+            border-left: 4px solid #2c7da0;
+            padding-left: 16px;
+            font-weight: 450;
+        }
+        .card-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            margin-top: 20px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.08);
+            flex: 1;
+            min-width: 340px;
+            padding: 1.6rem 1.8rem;
+            border: 1px solid #e2edf2;
+        }
+        .card h2 {
+            font-size: 1.55rem;
+            margin: 0 0 0.8rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #eef2fa;
+            padding-bottom: 0.6rem;
+        }
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 18px 0 16px;
+        }
+        button {
+            background: #f8fafd;
+            border: 1px solid #cbdde6;
+            padding: 8px 18px;
+            border-radius: 44px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            color: #1f3e54;
+        }
+        button.primary {
+            background: #2c7da0;
+            border-color: #2c7da0;
+            color: white;
+        }
+        button.primary:hover {
+            background: #1f6392;
+            transform: translateY(-2px);
+        }
+        button.warning {
+            background: #fff1e0;
+            border-color: #ffd9a5;
+            color: #b45f1b;
+        }
+        button.danger {
+            background: #ffe6e5;
+            border-color: #ffcdca;
+            color: #bc3f2e;
+        }
+        .image-gallery {
+            background: #fefefe;
+            border-radius: 28px;
+            border: 1px solid #e0ecf2;
+            padding: 20px 16px;
+            margin: 20px 0 12px;
+        }
+        .grid-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 14px;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        .image-card {
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            cursor: grab;
+            border: 1px solid #eef2f5;
+        }
+        .image-card img {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+        }
+        .img-info {
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+        }
+        .remove-img-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #9bb7c9;
+        }
+        /* 底部广告栏 + 留言板区域 (无管理员入口) */
+        .footer-panel {
+            margin-top: 40px;
+            background: #ffffffdd;
+            backdrop-filter: blur(4px);
+            border-radius: 32px;
+            border: 1px solid #dce7ef;
+            padding: 20px 28px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            justify-content: space-between;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+        }
+        .ad-section {
+            flex: 2;
+            min-width: 240px;
+            background: #fafdff;
+            border-radius: 24px;
+            padding: 12px 20px;
+            border: 1px solid #e0ecf5;
+        }
+        .message-section {
+            flex: 1.5;
+            min-width: 260px;
+            background: #fafdff;
+            border-radius: 24px;
+            padding: 12px 20px;
+            border: 1px solid #e0ecf5;
+        }
+        .message-item {
+            background: #fef9e6;
+            border-left: 4px solid #f4b942;
+            padding: 10px;
+            margin: 12px 0;
+            border-radius: 16px;
+        }
+        .private-note {
+            font-size: 0.7rem;
+            color: #b45309;
+        }
+        textarea, input {
+            border-radius: 32px;
+            border: 1px solid #cbdde6;
+            padding: 10px 16px;
+            width: 100%;
+            margin: 6px 0;
+        }
+        .info-hint {
+            font-size: 0.7rem;
+            color: #5584a0;
+            margin-top: 8px;
+        }
+        i {
+            margin-right: 6px;
+        }
+        @media (max-width: 780px) {
+            .footer-panel { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="tool-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <h1>📦 WLBpdf工具包 <span style="font-size:0.9rem;">· 专业版</span></h1>
+            <div class="version-badge">v4.0 · 智能转换</div>
+        </div>
+    </div>
+    <div class="sub">🖼️ 可视化图片转PDF · 🔗 合并PDF · 🖨️ PDF逐页导出高清图片 | 留言反馈将直达后台</div>
+
+    <div class="card-grid">
+        <!-- 功能1 图片打包PDF -->
+        <div class="card">
+            <h2>🖼️ ① 图片打包PDF <span style="font-size:0.7rem;">拖拽排序·网格预览</span></h2>
+            <div class="btn-group">
+                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; border:1px solid #bdd9e8; cursor:pointer;">
+                    📂 选择图片(多选)
+                    <input type="file" id="selectImagesWLB" multiple accept="image/jpeg,image/png,image/jpg,image/bmp,image/webp" style="display:none;">
+                </label>
+                <button id="appendImagesWLB" class="warning">➕ 追加</button>
+                <button id="clearImagesWLB" class="danger">🗑️ 清空</button>
+            </div>
+            <div class="image-gallery">
+                <div id="gridPreviewList" class="grid-preview"><div class="info-hint" style="text-align:center;">✨ 暂无图片，点击添加</div></div>
+            </div>
+            <button id="generatePdfFromImagesWLB" class="primary" style="background:#1f7b5a;">✨ 生成PDF并保存</button>
+            <div class="info-hint">✔ 拖拽卡片可调整顺序，所见即所得</div>
+        </div>
+
+        <!-- 功能2 合并PDF -->
+        <div class="card">
+            <h2>📑 ② 合并PDF文档</h2>
+            <div class="btn-group">
+                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; border:1px solid #bdd9e8; cursor:pointer;">
+                    📂 选择多个PDF
+                    <input type="file" id="mergePdfInputWLB" multiple accept="application/pdf" style="display:none;">
+                </label>
+                <button id="clearMergeListWLB" class="danger">清空列表</button>
+            </div>
+            <div id="pdfMergeListWLB" style="max-height:220px; overflow-y:auto; margin:12px 0;"></div>
+            <button id="mergePdfBtnWLB" class="primary" style="background:#5f6caf;">🔗 合并并保存PDF</button>
+        </div>
+
+        <!-- 功能3 PDF转图片 -->
+        <div class="card">
+            <h2>🖨️ ③ PDF → 图片</h2>
+            <div class="btn-group">
+                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; cursor:pointer;">
+                    📂 选择PDF文档
+                    <input type="file" id="pdfToImageInputWLB" accept="application/pdf" style="display:none;">
+                </label>
+            </div>
+            <div id="pdfSelectedStatus" class="info-hint" style="background:#eef4fa; padding:8px; border-radius:28px;">未选择PDF</div>
+            <button id="convertPdfToImagesWLB" class="primary" style="background:#c97e5a;">🖼️ 导出为图片(逐页)</button>
+            <div id="pdfConvertProgressWLB" class="info-hint"></div>
+        </div>
+    </div>
+
+    <!-- 底部区域：广告栏 + 留言板（留言数据存储供后台查看） -->
+    <div class="footer-panel">
+        <div class="ad-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3><i class="fas fa-ad"></i> 推广位</h3>
+                <span style="font-size:0.7rem; color:#7f8c8d;">由管理员远程配置</span>
+            </div>
+            <div id="adContentDisplay" style="margin-top: 12px; padding: 12px; background: #fef7e0; border-radius: 28px; text-align: center;">
+                <a href="#" id="adLink" target="_blank" style="text-decoration: none; font-weight: 600; color: #2c7da0;">⭐ 推荐工具：WLB智能办公助手 → 点击体验</a>
+            </div>
+            <div class="info-hint">* 广告链接由后台统一管理，实时生效。</div>
+        </div>
+        <div class="message-section">
+            <h3><i class="fas fa-envelope"></i> 留言板</h3>
+            <textarea id="msgInput" rows="2" placeholder="写下您的反馈或建议，管理员将在后台查看..."></textarea>
+            <button id="sendMsgBtn" style="width:100%; background:#2c7da0; color:white;">✉️ 发送留言</button>
+            <div id="msgListArea" style="max-height: 160px; overflow-y: auto; margin-top: 12px;">
+                <div class="info-hint">暂无留言，留下您的宝贵意见</div>
+            </div>
+            <div class="private-note"><i class="fas fa-lock"></i> 留言内容仅管理员在后台可见</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化pdf.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    
+    // ---------- 全局变量 ----------
+    let wlbImageFiles = [];
+    let mergePdfList = [];
+    let currentPdfForImage = null;
+    let sortableGrid = null;
+    
+    // 统计数据 (用于后台使用率监控，存储于localStorage)
+    let stats = {
+        pdfFromImages: 0,
+        mergePdfCount: 0,
+        pdfToImageCount: 0,
+        lastActive: new Date().toISOString()
+    };
+    
+    // 留言数据结构 (存储供后台查看)
+    let messages = [];
+    
+    // 广告配置: 链接文字 + url (可由后台远程更新)
+    let adConfig = {
+        linkText: "⭐ 推荐工具：WLB智能办公助手 → 点击体验",
+        linkUrl: "https://www.example.com/wlb-promo"
+    };
+    
+    // 加载存储数据 (localStorage)
+    function loadStorageData() {
+        const savedStats = localStorage.getItem('WLB_stats');
+        if(savedStats) {
+            try { stats = JSON.parse(savedStats); } catch(e) {}
+        }
+        const savedMsgs = localStorage.getItem('WLB_messages');
+        if(savedMsgs) {
+            try { messages = JSON.parse(savedMsgs); } catch(e) {}
+        }
+        const savedAd = localStorage.getItem('WLB_adConfig');
+        if(savedAd) {
+            try { adConfig = JSON.parse(savedAd); } catch(e) {}
+        }
+        updateStatsUI();
+        updateMessagesDisplay();
+        updateAdDisplay();
+        // 启动定期轮询广告配置 (模拟远程推送，每8秒检查一次localStorage变更，后台修改会同步)
+        startAdPolling();
+    }
+    
+    function saveStats() {
+        localStorage.setItem('WLB_stats', JSON.stringify(stats));
+        updateStatsUI();
+    }
+    
+    function saveMessages() {
+        localStorage.setItem('WLB_messages', JSON.stringify(messages));
+        updateMessagesDisplay();
+        // 触发存储事件，让后台如果打开也能感知（同源）
+        window.dispatchEvent(new Event('storage'));
+    }
+    
+    function saveAdConfig() {
+        localStorage.setItem('WLB_adConfig', JSON.stringify(adConfig));
+        updateAdDisplay();
+    }
+    
+    function updateStatsUI() {
+        // 仅内部记录，不在前端展示具体数字，但后台面板可读取
+        // 不需要UI展示，只存储
+    }
+    
+    // 前端展示最近的3条留言（仅展示最新留言，但不显示全部，仅示意，后台可看全量）
+    function updateMessagesDisplay() {
+        const msgArea = document.getElementById('msgListArea');
+        if(!msgArea) return;
+        if(messages.length === 0) {
+            msgArea.innerHTML = '<div class="info-hint">暂无留言，留下您的宝贵意见</div>';
+            return;
+        }
+        // 显示最近3条
+        const recent = messages.slice(-3).reverse();
+        let html = '';
+        recent.forEach(msg => {
+            html += `<div class="message-item" style="background:#f5f7fb;"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
+        });
+        if(messages.length > 3) {
+            html += `<div class="info-hint" style="text-align:center;">共 ${messages.length} 条留言，管理员可见全部</div>`;
+        }
+        msgArea.innerHTML = html;
+    }
+    
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    function updateAdDisplay() {
+        const adLink = document.getElementById('adLink');
+        if(adLink) {
+            adLink.innerText = adConfig.linkText;
+            adLink.href = adConfig.linkUrl;
+        }
+    }
+    
+    // 轮询检查广告配置更新 (远程推送, 通过后台修改localStorage)
+    function startAdPolling() {
+        let lastAdJson = JSON.stringify(adConfig);
+        setInterval(() => {
+            const savedAd = localStorage.getItem('WLB_adConfig');
+            if(savedAd) {
+                try {
+                    const newAd = JSON.parse(savedAd);
+                    if(JSON.stringify(newAd) !== lastAdJson) {
+                        adConfig = newAd;
+                        updateAdDisplay();
+                        lastAdJson = JSON.stringify(adConfig);
+                    }
+                } catch(e) {}
+            }
+            // 同时监听留言变化 (不需要额外动作)
+        }, 2000);
+    }
+    
+    function updateLastActive() {
+        stats.lastActive = new Date().toISOString();
+        saveStats();
+    }
+    
+    // 图片渲染网格
+    function renderImageGrid() {
+        const gridContainer = document.getElementById('gridPreviewList');
+        if (!gridContainer) return;
+        if (wlbImageFiles.length === 0) {
+            gridContainer.innerHTML = `<div class="info-hint" style="text-align:center;">📭 暂无图片，点击上方添加</div>`;
+            if (sortableGrid) sortableGrid.destroy();
+            return;
+        }
+        let html = '';
+        wlbImageFiles.forEach((file, idx) => {
+            const previewUrl = URL.createObjectURL(file);
+            html += `
+                <div class="image-card" data-idx="${idx}">
+                    <img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')">
+                    <div class="img-info">
+                        <span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span>
+                        <button class="remove-img-btn" data-remove-idx="${idx}">✖</button>
+                    </div>
+                </div>
+            `;
+        });
+        gridContainer.innerHTML = html;
+        document.querySelectorAll('.remove-img-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.getAttribute('data-remove-idx'));
+                if (!isNaN(idx)) { wlbImageFiles.splice(idx,1); renderImageGrid(); }
+            });
+        });
+        if (sortableGrid) sortableGrid.destroy();
+        sortableGrid = new Sortable(gridContainer, {
+            animation: 200,
+            handle: '.image-card',
+            onEnd: (evt) => {
+                if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
+                    const moved = wlbImageFiles.splice(evt.oldIndex, 1)[0];
+                    wlbImageFiles.splice(evt.newIndex, 0, moved);
+                    renderImageGrid();
+                }
+            }
+        });
+    }
+    
+    function addImageFiles(files) {
+        if(!files.length) return;
+        const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
+        if(imgs.length) { wlbImageFiles.push(...imgs); renderImageGrid(); }
+        else alert("不支持的图片格式");
+    }
+    
+    // 图片生成PDF
+    async function generateWlbPdf() {
+        if(wlbImageFiles.length === 0) { alert("请添加图片"); return; }
+        if(typeof window.jspdf === 'undefined') {
+            await new Promise(r=>{let s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload=r; document.head.appendChild(s);});
+        }
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        let first = true;
+        for(let f of wlbImageFiles) {
+            const dataUrl = await new Promise(r=>{let fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(f);});
+            const img = new Image(); await new Promise(r=>{img.onload=r; img.src=dataUrl;});
+            const pdfW = pdf.internal.pageSize.getWidth();
+            const pdfH = pdf.internal.pageSize.getHeight();
+            let ratio = Math.min(pdfW/img.width, pdfH/img.height);
+            let w = img.width*ratio, h = img.height*ratio;
+            if(!first) pdf.addPage();
+            pdf.addImage(dataUrl, 'JPEG', (pdfW-w)/2, (pdfH-h)/2, w, h);
+            first=false;
+        }
+        const blob = pdf.output('blob');
+        await saveWithPicker(blob, `WLB_图片包_${Date.now()}.pdf`);
+        stats.pdfFromImages++; saveStats(); updateLastActive();
+    }
+    
+    async function saveWithPicker(blob, name) {
+        try {
+            if('showSaveFilePicker' in window) {
+                const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{accept: {'application/pdf': ['.pdf']}}] });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const a=document.createElement('a'); const url=URL.createObjectURL(blob); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
+            }
+        } catch(e) { if(e.name !== 'AbortError') alert("保存失败"+e.message); }
+    }
+    
+    // 合并PDF
+    async function mergePdfsAction() {
+        if(mergePdfList.length===0){ alert("请添加PDF"); return; }
+        const PDFLib = window.PDFLib;
+        const merged = await PDFLib.PDFDocument.create();
+        for(let file of mergePdfList) {
+            const buf = await file.arrayBuffer();
+            const doc = await PDFLib.PDFDocument.load(buf);
+            const pages = await merged.copyPages(doc, doc.getPageIndices());
+            pages.forEach(p=>merged.addPage(p));
+        }
+        const bytes = await merged.save();
+        await saveWithPicker(new Blob([bytes],{type:'application/pdf'}), `WLB_合并_${Date.now()}.pdf`);
+        stats.mergePdfCount++; saveStats(); updateLastActive();
+    }
+    function renderMergeUI() {
+        const c = document.getElementById('pdfMergeListWLB');
+        if(!mergePdfList.length){ c.innerHTML='<div class="info-hint" style="text-align:center;">暂无PDF</div>'; return; }
+        let html='';
+        mergePdfList.forEach((f,i)=> {
+            html+=`<div style="display:flex; justify-content:space-between; background:#fff; margin:6px 0; padding:8px 12px; border-radius:40px;"><span>📄 ${f.name}</span><button class="delMerge" data-idx="${i}" style="border:none; background:none;">✖</button></div>`;
+        });
+        c.innerHTML=html;
+        document.querySelectorAll('.delMerge').forEach(btn=>{
+            btn.addEventListener('click',(e)=>{
+                let idx=parseInt(btn.dataset.idx); mergePdfList.splice(idx,1); renderMergeUI();
+            });
+        });
+    }
+    
+    // PDF转图片
+    async function pdfToImagesAction(pdfFile) {
+        if(!pdfFile) return;
+        const progress = document.getElementById('pdfConvertProgressWLB');
+        progress.innerText = "解析中...";
+        const buf = await pdfFile.arrayBuffer();
+        const doc = await pdfjsLib.getDocument({data: buf}).promise;
+        const total = doc.numPages;
+        for(let i=1;i<=total;i++) {
+            const page = await doc.getPage(i);
+            const viewport = page.getViewport({scale:2.5});
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width; canvas.height = viewport.height;
+            await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+            const blob = await new Promise(r=>canvas.toBlob(r,'image/png'));
+            await saveWithPicker(blob, `${pdfFile.name.replace('.pdf','')}_page${i}.png`);
+            progress.innerText = `已导出 ${i}/${total}`;
+        }
+        stats.pdfToImageCount++; saveStats(); updateLastActive();
+        progress.innerText = `✅ 导出完成共${total}张`;
+    }
+    
+    // 发送留言
+    function sendMessage() {
+        const txt = document.getElementById('msgInput').value.trim();
+        if(!txt) { alert("请输入留言内容"); return; }
+        messages.push({ text: txt, time: new Date().toISOString(), id: Date.now() + Math.random() });
+        saveMessages();
+        document.getElementById('msgInput').value = '';
+        alert('留言已发送，感谢反馈！');
+    }
+    
+    // 事件绑定
+    document.getElementById('selectImagesWLB').addEventListener('change',(e)=>{ addImageFiles(e.target.files); e.target.value=''; });
+    document.getElementById('appendImagesWLB').addEventListener('click',()=>document.getElementById('selectImagesWLB').click());
+    document.getElementById('clearImagesWLB').addEventListener('click',()=>{ if(confirm('清空所有图片？')){ wlbImageFiles=[]; renderImageGrid(); } });
+    document.getElementById('generatePdfFromImagesWLB').addEventListener('click', generateWlbPdf);
+    document.getElementById('mergePdfInputWLB').addEventListener('change',(e)=>{ if(e.target.files.length) { mergePdfList.push(...Array.from(e.target.files)); renderMergeUI(); } e.target.value=''; });
+    document.getElementById('clearMergeListWLB').addEventListener('click',()=>{ if(confirm('清空合并列表')){ mergePdfList=[]; renderMergeUI(); } });
+    document.getElementById('mergePdfBtnWLB').addEventListener('click', mergePdfsAction);
+    document.getElementById('pdfToImageInputWLB').addEventListener('change',(e)=>{ if(e.target.files[0]) { currentPdfForImage=e.target.files[0]; document.getElementById('pdfSelectedStatus').innerHTML=`📄 ${currentPdfForImage.name}`; } e.target.value=''; });
+    document.getElementById('convertPdfToImagesWLB').addEventListener('click',()=>{ if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
+    document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
+    
+    // 初始化
+    loadStorageData();
+    renderImageGrid();
+    renderMergeUI();
+    updateLastActive();
+    setInterval(()=>{ updateLastActive(); }, 60000);
+</script>
+</body>
+</html>

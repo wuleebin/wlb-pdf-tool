@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>WLB工具包 · 后台管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        /* 登录界面样式 */
+        .login-container {
+            background: white;
+            border-radius: 32px;
+            padding: 40px 36px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            text-align: center;
+        }
+        .login-container h2 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1e3a5f;
+        }
+        .login-logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #2c7da0;
+        }
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 28px;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        }
+        .login-btn {
+            width: 100%;
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .login-btn:hover {
+            background: #1f6392;
+            transform: translateY(-2px);
+        }
+        .error-msg {
+            color: #e53e3e;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        /* 后台主界面样式 */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1400px;
+            background: #f1f5f9;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px -12px rgba(0,0,0,0.3);
+        }
+        .dashboard-header {
+            background: white;
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .dashboard-header h1 {
+            font-size: 24px;
+            color: #0f2b3d;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+        .dashboard-content {
+            padding: 32px;
+        }
+        /* 统计卡片 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: 0.2s;
+        }
+        .stat-card i {
+            font-size: 32px;
+            color: #2c7da0;
+            margin-bottom: 12px;
+        }
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .stat-label {
+            color: #64748b;
+            margin-top: 8px;
+        }
+        /* 广告配置区域 */
+        .config-section, .messages-section {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 32px;
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #334155;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 28px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            border-radius: 20px;
+            resize: vertical;
+        }
+        .save-btn {
+            background: #2c7da0;
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .save-btn:hover {
+            background: #1f6392;
+        }
+        .preview-box {
+            background: #fef7e0;
+            padding: 16px;
+            border-radius: 20px;
+            margin-top: 16px;
+            text-align: center;
+        }
+        /* 留言列表 */
+        .message-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message-item {
+            background: #f8fafc;
+            border-left: 4px solid #f4b942;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .message-content {
+            flex: 1;
+        }
+        .message-time {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        .message-text {
+            color: #1e293b;
+            word-break: break-word;
+        }
+        .delete-msg {
+            background: #fee2e2;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            cursor: pointer;
+            color: #dc2626;
+            font-size: 12px;
+        }
+        .delete-msg:hover {
+            background: #fecaca;
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .refresh-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-left: 12px;
+            font-size: 12px;
+        }
+        .status-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            display: inline-block;
+        }
+        hr {
+            margin: 20px 0;
+        }
+        @media (max-width: 768px) {
+            .dashboard-content { padding: 20px; }
+            .stats-grid { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginPanel" class="login-container">
+        <div class="login-logo">
+            <i class="fas fa-chalkboard-user"></i>
+        </div>
+        <h2>WLB 后台管理系统</h2>
+        <p style="color: #64748b; margin-bottom: 24px;">请输入管理员凭证</p>
+        <div class="input-group">
+            <label><i class="fas fa-user"></i> 用户名</label>
+            <input type="text" id="loginUsername" placeholder="wilink" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label><i class="fas fa-lock"></i> 密码</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="login-btn" id="doLoginBtn"><i class="fas fa-sign-in-alt"></i> 登录后台</button>
+        <div id="loginError" class="error-msg"></div>
+        <div style="margin-top: 24px; font-size: 12px; color: #94a3b8;">
+            <i class="fas fa-shield-alt"></i> 授权访问 · 仅管理员可见
+        </div>
+    </div>
+
+    <!-- 后台主界面 (初始隐藏) -->
+    <div id="dashboardPanel" class="dashboard-container" style="display: none;">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-tachometer-alt"></i> WLBpdf工具包 · 远程管理后台</h1>
+            <div class="user-info">
+                <span><i class="fas fa-user-shield"></i> 管理员: wilink</span>
+                <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 退出登录</button>
+            </div>
+        </div>
+        <div class="dashboard-content">
+            <!-- 统计卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-images"></i>
+                    <div class="stat-number" id="statPdfCount">0</div>
+                    <div class="stat-label">图片打包PDF次数</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-file-pdf"></i>
+                    <div class="stat-number" id="statMergeCount">0</div>
+                    <div class="stat-label">合并PDF次数</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-camera"></i>
+                    <div class="stat-number" id="statImgCount">0</div>
+                    <div class="stat-label">PDF转图片次数</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <div class="stat-number" id="lastActiveTime">-</div>
+                    <div class="stat-label">最后活跃时间</div>
+                </div>
+            </div>
+
+            <!-- 广告远程推送配置 -->
+            <div class="config-section">
+                <div class="section-title">
+                    <i class="fas fa-ad"></i> 远程广告推送
+                    <span class="status-badge"><i class="fas fa-sync-alt"></i> 实时生效</span>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-link"></i> 广告链接文字</label>
+                    <input type="text" id="adLinkText" placeholder="例如：⭐ 推荐工具：WLB智能办公助手" value="⭐ 推荐工具：WLB智能办公助手 → 点击体验">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-globe"></i> 广告跳转URL</label>
+                    <input type="url" id="adLinkUrl" placeholder="https://example.com" value="https://www.example.com/wlb-promo">
+                </div>
+                <button class="save-btn" id="saveAdConfigBtn"><i class="fas fa-cloud-upload-alt"></i> 推送广告到前端</button>
+                <div class="preview-box">
+                    <i class="fas fa-eye"></i> 预览效果：<br>
+                    <a href="#" id="previewAdLink" target="_blank" style="color: #2c7da0; text-decoration: none;">⭐ 推荐工具：WLB智能办公助手 → 点击体验</a>
+                </div>
+                <div class="info-hint" style="font-size:12px; color:#64748b; margin-top:12px;">
+                    <i class="fas fa-info-circle"></i> 前端工具页面每2秒自动同步广告配置，推送后立即生效，无需刷新前端页面。
+                </div>
+            </div>
+
+            <!-- 用户留言板 (私密，仅管理员可见) -->
+            <div class="messages-section">
+                <div class="section-title">
+                    <i class="fas fa-envelope"></i> 用户留言板
+                    <button id="refreshMessagesBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> 刷新</button>
+                </div>
+                <div id="adminMessagesList" class="message-list">
+                    <div class="empty-msg"><i class="fas fa-inbox"></i> 暂无用户留言</div>
+                </div>
+                <div style="margin-top: 16px; font-size: 12px; color: #64748b; background: #f1f5f9; padding: 12px; border-radius: 16px;">
+                    <i class="fas fa-lock"></i> 所有留言仅在此后台显示，前端用户无法查看其他留言。可删除留言进行管理。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 固定的管理员凭证
+        const ADMIN_USER = "wilink";
+        const ADMIN_PASS = "wlb0404";
+        
+        // 存储key (与前端工具保持一致)
+        const STORAGE_KEYS = {
+            STATS: 'WLB_stats',
+            MESSAGES: 'WLB_messages',
+            AD_CONFIG: 'WLB_adConfig'
+        };
+        
+        // 辅助函数: 从localStorage读取数据
+        function loadStats() {
+            const saved = localStorage.getItem(STORAGE_KEYS.STATS);
+            if(saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {}
+            }
+            return { pdfFromImages: 0, mergePdfCount: 0, pdfToImageCount: 0, lastActive: new Date().toISOString() };
+        }
+        
+        function loadMessages() {
+            const saved = localStorage.getItem(STORAGE_KEYS.MESSAGES);
+            if(saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {}
+            }
+            return [];
+        }
+        
+        function loadAdConfig() {
+            const saved = localStorage.getItem(STORAGE_KEYS.AD_CONFIG);
+            if(saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch(e) {}
+            }
+            return { linkText: "⭐ 推荐工具：WLB智能办公助手 → 点击体验", linkUrl: "https://www.example.com/wlb-promo" };
+        }
+        
+        // 保存广告配置 (推送到前端)
+        function saveAdConfig(adConfig) {
+            localStorage.setItem(STORAGE_KEYS.AD_CONFIG, JSON.stringify(adConfig));
+            // 手动触发存储事件，同源下前端页面会收到更新 (前端有轮询，但为了立即响应)
+            window.dispatchEvent(new Event('storage'));
+        }
+        
+        // 更新统计UI
+        function updateStatsUI() {
+            const stats = loadStats();
+            document.getElementById('statPdfCount').innerText = stats.pdfFromImages || 0;
+            document.getElementById('statMergeCount').innerText = stats.mergePdfCount || 0;
+            document.getElementById('statImgCount').innerText = stats.pdfToImageCount || 0;
+            const lastActive = stats.lastActive ? new Date(stats.lastActive).toLocaleString() : '从未';
+            document.getElementById('lastActiveTime').innerText = lastActive;
+        }
+        
+        // 更新留言列表
+        function updateMessagesUI() {
+            const messages = loadMessages();
+            const container = document.getElementById('adminMessagesList');
+            if(!container) return;
+            if(messages.length === 0) {
+                container.innerHTML = '<div class="empty-msg"><i class="fas fa-inbox"></i> 暂无用户留言</div>';
+                return;
+            }
+            // 按时间倒序显示（最新的在上）
+            const sorted = [...messages].reverse();
+            let html = '';
+            sorted.forEach(msg => {
+                const timeStr = new Date(msg.time).toLocaleString();
+                html += `
+                    <div class="message-item" data-msg-id="${msg.id}">
+                        <div class="message-content">
+                            <div class="message-time"><i class="far fa-clock"></i> ${timeStr}</div>
+                            <div class="message-text">${escapeHtml(msg.text)}</div>
+                        </div>
+                        <button class="delete-msg" data-id="${msg.id}"><i class="fas fa-trash-alt"></i> 删除</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            // 绑定删除事件
+            document.querySelectorAll('.delete-msg').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = parseFloat(btn.getAttribute('data-id'));
+                    deleteMessageById(id);
+                });
+            });
+        }
+        
+        function deleteMessageById(id) {
+            let messages = loadMessages();
+            const newMessages = messages.filter(m => m.id !== id);
+            localStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(newMessages));
+            updateMessagesUI();
+            // 触发存储事件，前端如果有监听也可以同步（前端页面会自己刷新显示最新3条，但不需要强同步）
+            window.dispatchEvent(new Event('storage'));
+        }
+        
+        function escapeHtml(str) {
+            if(!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // 更新广告预览和加载到表单
+        function loadAdConfigToForm() {
+            const ad = loadAdConfig();
+            document.getElementById('adLinkText').value = ad.linkText || '';
+            document.getElementById('adLinkUrl').value = ad.linkUrl || '';
+            const previewLink = document.getElementById('previewAdLink');
+            if(previewLink) {
+                previewLink.innerText = ad.linkText || '广告文字';
+                previewLink.href = ad.linkUrl || '#';
+            }
+        }
+        
+        // 推送广告配置
+        function pushAdConfig() {
+            const newText = document.getElementById('adLinkText').value.trim();
+            const newUrl = document.getElementById('adLinkUrl').value.trim();
+            if(!newText) {
+                alert('广告文字不能为空');
+                return;
+            }
+            const newConfig = { linkText: newText, linkUrl: newUrl || '#' };
+            saveAdConfig(newConfig);
+            // 更新预览
+            const previewLink = document.getElementById('previewAdLink');
+            if(previewLink) {
+                previewLink.innerText = newText;
+                previewLink.href = newUrl || '#';
+            }
+            alert('✅ 广告配置已推送！前端工具页面将自动同步（2秒内生效）');
+        }
+        
+        // 检查登录状态
+        function checkAuth() {
+            const isLogged = sessionStorage.getItem('wlb_admin_logged');
+            if(isLogged === 'true') {
+                showDashboard();
+            } else {
+                showLogin();
+            }
+        }
+        
+        function showLogin() {
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('dashboardPanel').style.display = 'none';
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('dashboardPanel').style.display = 'block';
+            // 加载所有数据
+            updateStatsUI();
+            updateMessagesUI();
+            loadAdConfigToForm();
+            // 启动自动刷新 (每3秒刷新统计和留言)
+            if(window.dashboardInterval) clearInterval(window.dashboardInterval);
+            window.dashboardInterval = setInterval(() => {
+                // 只有dashboard可见时才刷新
+                if(document.getElementById('dashboardPanel').style.display !== 'none') {
+                    updateStatsUI();
+                    updateMessagesUI();
+                    // 广告配置不从localStorage自动覆盖表单，避免编辑中被打断，但是预览需更新
+                    const currentAd = loadAdConfig();
+                    const previewLink = document.getElementById('previewAdLink');
+                    if(previewLink && currentAd.linkText !== document.getElementById('adLinkText').value) {
+                        // 如果外部有变更，仅更新预览但保留表单原样? 不做自动覆盖表单，保留管理员编辑内容
+                        // 但预览展示最新实际生效广告
+                        previewLink.innerText = currentAd.linkText;
+                        previewLink.href = currentAd.linkUrl;
+                    }
+                }
+            }, 3000);
+        }
+        
+        function logout() {
+            sessionStorage.removeItem('wlb_admin_logged');
+            if(window.dashboardInterval) clearInterval(window.dashboardInterval);
+            showLogin();
+            // 清空输入框
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').innerText = '';
+        }
+        
+        // 登录验证
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if(username === ADMIN_USER && password === ADMIN_PASS) {
+                sessionStorage.setItem('wlb_admin_logged', 'true');
+                document.getElementById('loginError').innerText = '';
+                showDashboard();
+            } else {
+                document.getElementById('loginError').innerText = '用户名或密码错误，请重试';
+            }
+        }
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            document.getElementById('doLoginBtn').addEventListener('click', attemptLogin);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('saveAdConfigBtn').addEventListener('click', pushAdConfig);
+            document.getElementById('refreshMessagesBtn').addEventListener('click', () => {
+                updateMessagesUI();
+            });
+            // 回车登录
+            const pwdInput = document.getElementById('loginPassword');
+            const userInput = document.getElementById('loginUsername');
+            pwdInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') attemptLogin();
+            });
+            userInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') attemptLogin();
+            });
+            // 广告表单实时预览
+            document.getElementById('adLinkText').addEventListener('input', function() {
+                const previewLink = document.getElementById('previewAdLink');
+                if(previewLink) previewLink.innerText = this.value || '广告文字';
+            });
+            document.getElementById('adLinkUrl').addEventListener('input', function() {
+                const previewLink = document.getElementById('previewAdLink');
+                if(previewLink) previewLink.href = this.value || '#';
+            });
+        }
+        
+        // 页面加载时检测登录状态
+        initEventListeners();
+        checkAuth();
+        
+        // 监听storage变化，当其他标签页修改数据时更新（如前端页面发送留言，后台实时显示）
+        window.addEventListener('storage', (e) => {
+            if(e.key === STORAGE_KEYS.MESSAGES) {
+                if(document.getElementById('dashboardPanel').style.display !== 'none') {
+                    updateMessagesUI();
+                }
+            }
+            if(e.key === STORAGE_KEYS.STATS) {
+                if(document.getElementById('dashboardPanel').style.display !== 'none') {
+                    updateStatsUI();
+                }
+            }
+            if(e.key === STORAGE_KEYS.AD_CONFIG) {
+                if(document.getElementById('dashboardPanel').style.display !== 'none') {
+                    // 更新预览展示最新生效广告，但不覆盖表单编辑框（避免打断管理员输入）
+                    const newAd = loadAdConfig();
+                    const previewLink = document.getElementById('previewAdLink');
+                    if(previewLink) {
+                        previewLink.innerText = newAd.linkText;
+                        previewLink.href = newAd.linkUrl;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
