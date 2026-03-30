@@ -158,7 +158,6 @@
             cursor: pointer;
             color: #9bb7c9;
         }
-        /* 底部广告栏 + 留言板区域 (无管理员入口) */
         .footer-panel {
             margin-top: 40px;
             background: #ffffffdd;
@@ -277,7 +276,7 @@
         </div>
     </div>
 
-    <!-- 底部区域：广告栏 + 留言板（留言数据存储供后台查看） -->
+    <!-- 底部区域：广告栏 + 留言板 -->
     <div class="footer-panel">
         <div class="ad-section">
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -302,16 +301,13 @@
 </div>
 
 <script>
-    // 初始化pdf.js worker
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     
-    // ---------- 全局变量 ----------
     let wlbImageFiles = [];
     let mergePdfList = [];
     let currentPdfForImage = null;
     let sortableGrid = null;
     
-    // 统计数据 (用于后台使用率监控，存储于localStorage)
     let stats = {
         pdfFromImages: 0,
         mergePdfCount: 0,
@@ -319,59 +315,28 @@
         lastActive: new Date().toISOString()
     };
     
-    // 留言数据结构 (存储供后台查看)
     let messages = [];
-    
-    // 广告配置: 链接文字 + url (可由后台远程更新)
     let adConfig = {
         linkText: "⭐ 推荐工具：WLB智能办公助手 → 点击体验",
         linkUrl: "https://www.example.com/wlb-promo"
     };
     
-    // 加载存储数据 (localStorage)
     function loadStorageData() {
         const savedStats = localStorage.getItem('WLB_stats');
-        if(savedStats) {
-            try { stats = JSON.parse(savedStats); } catch(e) {}
-        }
+        if(savedStats) { try { stats = JSON.parse(savedStats); } catch(e) {} }
         const savedMsgs = localStorage.getItem('WLB_messages');
-        if(savedMsgs) {
-            try { messages = JSON.parse(savedMsgs); } catch(e) {}
-        }
+        if(savedMsgs) { try { messages = JSON.parse(savedMsgs); } catch(e) {} }
         const savedAd = localStorage.getItem('WLB_adConfig');
-        if(savedAd) {
-            try { adConfig = JSON.parse(savedAd); } catch(e) {}
-        }
-        updateStatsUI();
+        if(savedAd) { try { adConfig = JSON.parse(savedAd); } catch(e) {} }
         updateMessagesDisplay();
         updateAdDisplay();
-        // 启动定期轮询广告配置 (模拟远程推送，每8秒检查一次localStorage变更，后台修改会同步)
         startAdPolling();
     }
     
-    function saveStats() {
-        localStorage.setItem('WLB_stats', JSON.stringify(stats));
-        updateStatsUI();
-    }
+    function saveStats() { localStorage.setItem('WLB_stats', JSON.stringify(stats)); }
+    function saveMessages() { localStorage.setItem('WLB_messages', JSON.stringify(messages)); updateMessagesDisplay(); }
+    function saveAdConfig() { localStorage.setItem('WLB_adConfig', JSON.stringify(adConfig)); updateAdDisplay(); }
     
-    function saveMessages() {
-        localStorage.setItem('WLB_messages', JSON.stringify(messages));
-        updateMessagesDisplay();
-        // 触发存储事件，让后台如果打开也能感知（同源）
-        window.dispatchEvent(new Event('storage'));
-    }
-    
-    function saveAdConfig() {
-        localStorage.setItem('WLB_adConfig', JSON.stringify(adConfig));
-        updateAdDisplay();
-    }
-    
-    function updateStatsUI() {
-        // 仅内部记录，不在前端展示具体数字，但后台面板可读取
-        // 不需要UI展示，只存储
-    }
-    
-    // 前端展示最近的3条留言（仅展示最新留言，但不显示全部，仅示意，后台可看全量）
     function updateMessagesDisplay() {
         const msgArea = document.getElementById('msgListArea');
         if(!msgArea) return;
@@ -379,7 +344,6 @@
             msgArea.innerHTML = '<div class="info-hint">暂无留言，留下您的宝贵意见</div>';
             return;
         }
-        // 显示最近3条
         const recent = messages.slice(-3).reverse();
         let html = '';
         recent.forEach(msg => {
@@ -391,25 +355,13 @@
         msgArea.innerHTML = html;
     }
     
-    function escapeHtml(str) {
-        if(!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        });
-    }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
     
     function updateAdDisplay() {
         const adLink = document.getElementById('adLink');
-        if(adLink) {
-            adLink.innerText = adConfig.linkText;
-            adLink.href = adConfig.linkUrl;
-        }
+        if(adLink) { adLink.innerText = adConfig.linkText; adLink.href = adConfig.linkUrl; }
     }
     
-    // 轮询检查广告配置更新 (远程推送, 通过后台修改localStorage)
     function startAdPolling() {
         let lastAdJson = JSON.stringify(adConfig);
         setInterval(() => {
@@ -424,16 +376,11 @@
                     }
                 } catch(e) {}
             }
-            // 同时监听留言变化 (不需要额外动作)
         }, 2000);
     }
     
-    function updateLastActive() {
-        stats.lastActive = new Date().toISOString();
-        saveStats();
-    }
+    function updateLastActive() { stats.lastActive = new Date().toISOString(); saveStats(); }
     
-    // 图片渲染网格
     function renderImageGrid() {
         const gridContainer = document.getElementById('gridPreviewList');
         if (!gridContainer) return;
@@ -445,15 +392,7 @@
         let html = '';
         wlbImageFiles.forEach((file, idx) => {
             const previewUrl = URL.createObjectURL(file);
-            html += `
-                <div class="image-card" data-idx="${idx}">
-                    <img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')">
-                    <div class="img-info">
-                        <span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span>
-                        <button class="remove-img-btn" data-remove-idx="${idx}">✖</button>
-                    </div>
-                </div>
-            `;
+            html += `<div class="image-card" data-idx="${idx}"><img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')"><div class="img-info"><span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span><button class="remove-img-btn" data-remove-idx="${idx}">✖</button></div></div>`;
         });
         gridContainer.innerHTML = html;
         document.querySelectorAll('.remove-img-btn').forEach(btn => {
@@ -483,7 +422,6 @@
         else alert("不支持的图片格式");
     }
     
-    // 图片生成PDF
     async function generateWlbPdf() {
         if(wlbImageFiles.length === 0) { alert("请添加图片"); return; }
         if(typeof window.jspdf === 'undefined') {
@@ -521,7 +459,6 @@
         } catch(e) { if(e.name !== 'AbortError') alert("保存失败"+e.message); }
     }
     
-    // 合并PDF
     async function mergePdfsAction() {
         if(mergePdfList.length===0){ alert("请添加PDF"); return; }
         const PDFLib = window.PDFLib;
@@ -536,6 +473,7 @@
         await saveWithPicker(new Blob([bytes],{type:'application/pdf'}), `WLB_合并_${Date.now()}.pdf`);
         stats.mergePdfCount++; saveStats(); updateLastActive();
     }
+    
     function renderMergeUI() {
         const c = document.getElementById('pdfMergeListWLB');
         if(!mergePdfList.length){ c.innerHTML='<div class="info-hint" style="text-align:center;">暂无PDF</div>'; return; }
@@ -551,7 +489,6 @@
         });
     }
     
-    // PDF转图片
     async function pdfToImagesAction(pdfFile) {
         if(!pdfFile) return;
         const progress = document.getElementById('pdfConvertProgressWLB');
@@ -573,7 +510,6 @@
         progress.innerText = `✅ 导出完成共${total}张`;
     }
     
-    // 发送留言
     function sendMessage() {
         const txt = document.getElementById('msgInput').value.trim();
         if(!txt) { alert("请输入留言内容"); return; }
@@ -583,7 +519,6 @@
         alert('留言已发送，感谢反馈！');
     }
     
-    // 事件绑定
     document.getElementById('selectImagesWLB').addEventListener('change',(e)=>{ addImageFiles(e.target.files); e.target.value=''; });
     document.getElementById('appendImagesWLB').addEventListener('click',()=>document.getElementById('selectImagesWLB').click());
     document.getElementById('clearImagesWLB').addEventListener('click',()=>{ if(confirm('清空所有图片？')){ wlbImageFiles=[]; renderImageGrid(); } });
@@ -595,7 +530,6 @@
     document.getElementById('convertPdfToImagesWLB').addEventListener('click',()=>{ if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
     document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
     
-    // 初始化
     loadStorageData();
     renderImageGrid();
     renderMergeUI();
