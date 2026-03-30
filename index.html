@@ -3,233 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WLBpdf工具包 · 专业版 | 图片转PDF | 合并PDF | PDF转图片</title>
-    <!-- PDF.js 核心库 -->
+    <title>WLBpdf工具包 · 云端版 | 图片转PDF | 合并PDF | PDF转图片</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <!-- pdf-lib 用于合并PDF -->
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <!-- SortableJS 拖拽排序增强 -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <!-- Font Awesome 6 图标库 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, 'Segoe UI', 'Roboto', 'Noto Sans', sans-serif;
-        }
-        body {
-            background: #f0f4fa;
-            margin: 0;
-            padding: 28px 20px 60px 20px;
-            color: #0a1c2f;
-        }
-        .container {
-            max-width: 1500px;
-            margin: 0 auto;
-        }
-        .tool-header {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(145deg, #0f2b3d, #1e4a6b);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin: 0;
-            letter-spacing: -0.3px;
-        }
-        .version-badge {
-            background: #e9eef3;
-            padding: 4px 12px;
-            border-radius: 60px;
-            font-size: 0.8rem;
-            font-weight: 500;
-            color: #2c5a7a;
-        }
-        .sub {
-            color: #3a5a78;
-            margin-bottom: 28px;
-            border-left: 4px solid #2c7da0;
-            padding-left: 16px;
-            font-weight: 450;
-        }
-        .card-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 28px;
-            margin-top: 20px;
-        }
-        .card {
-            background: #ffffff;
-            border-radius: 32px;
-            box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.08);
-            flex: 1;
-            min-width: 340px;
-            padding: 1.6rem 1.8rem;
-            border: 1px solid #e2edf2;
-        }
-        .card h2 {
-            font-size: 1.55rem;
-            margin: 0 0 0.8rem 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 2px solid #eef2fa;
-            padding-bottom: 0.6rem;
-        }
-        .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin: 18px 0 16px;
-        }
-        button {
-            background: #f8fafd;
-            border: 1px solid #cbdde6;
-            padding: 8px 18px;
-            border-radius: 44px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-            color: #1f3e54;
-        }
-        button.primary {
-            background: #2c7da0;
-            border-color: #2c7da0;
-            color: white;
-        }
-        button.primary:hover {
-            background: #1f6392;
-            transform: translateY(-2px);
-        }
-        button.warning {
-            background: #fff1e0;
-            border-color: #ffd9a5;
-            color: #b45f1b;
-        }
-        button.danger {
-            background: #ffe6e5;
-            border-color: #ffcdca;
-            color: #bc3f2e;
-        }
-        .image-gallery {
-            background: #fefefe;
-            border-radius: 28px;
-            border: 1px solid #e0ecf2;
-            padding: 20px 16px;
-            margin: 20px 0 12px;
-        }
-        .grid-preview {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 14px;
-            max-height: 420px;
-            overflow-y: auto;
-        }
-        .image-card {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-            cursor: grab;
-            border: 1px solid #eef2f5;
-        }
-        .image-card img {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            object-fit: cover;
-            border-radius: 16px 16px 0 0;
-        }
-        .img-info {
-            padding: 6px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-        }
-        .remove-img-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #9bb7c9;
-        }
-        .footer-panel {
-            margin-top: 40px;
-            background: #ffffffdd;
-            backdrop-filter: blur(4px);
-            border-radius: 32px;
-            border: 1px solid #dce7ef;
-            padding: 20px 28px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 28px;
-            justify-content: space-between;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-        }
-        .ad-section {
-            flex: 2;
-            min-width: 240px;
-            background: #fafdff;
-            border-radius: 24px;
-            padding: 12px 20px;
-            border: 1px solid #e0ecf5;
-        }
-        .message-section {
-            flex: 1.5;
-            min-width: 260px;
-            background: #fafdff;
-            border-radius: 24px;
-            padding: 12px 20px;
-            border: 1px solid #e0ecf5;
-        }
-        .message-item {
-            background: #fef9e6;
-            border-left: 4px solid #f4b942;
-            padding: 10px;
-            margin: 12px 0;
-            border-radius: 16px;
-        }
-        .private-note {
-            font-size: 0.7rem;
-            color: #b45309;
-        }
-        textarea, input {
-            border-radius: 32px;
-            border: 1px solid #cbdde6;
-            padding: 10px 16px;
-            width: 100%;
-            margin: 6px 0;
-        }
-        .info-hint {
-            font-size: 0.7rem;
-            color: #5584a0;
-            margin-top: 8px;
-        }
-        i {
-            margin-right: 6px;
-        }
-        @media (max-width: 780px) {
-            .footer-panel { flex-direction: column; }
-        }
+        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
+        body { background: #f0f4fa; margin: 0; padding: 28px 20px 60px; color: #0a1c2f; }
+        .container { max-width: 1500px; margin: 0 auto; }
+        .tool-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; }
+        h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(145deg, #0f2b3d, #1e4a6b); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0; }
+        .version-badge { background: #e9eef3; padding: 4px 12px; border-radius: 60px; font-size: 0.8rem; color: #2c5a7a; }
+        .sub { color: #3a5a78; margin-bottom: 28px; border-left: 4px solid #2c7da0; padding-left: 16px; }
+        .card-grid { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 20px; }
+        .card { background: white; border-radius: 32px; box-shadow: 0 12px 28px -8px rgba(0,0,0,0.08); flex: 1; min-width: 340px; padding: 1.6rem 1.8rem; border: 1px solid #e2edf2; }
+        .card h2 { font-size: 1.55rem; margin: 0 0 0.8rem 0; display: flex; gap: 10px; border-bottom: 2px solid #eef2fa; padding-bottom: 0.6rem; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 16px; }
+        button { background: #f8fafd; border: 1px solid #cbdde6; padding: 8px 18px; border-radius: 44px; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.85rem; color: #1f3e54; }
+        button.primary { background: #2c7da0; border-color: #2c7da0; color: white; }
+        button.primary:hover { background: #1f6392; transform: translateY(-2px); }
+        button.warning { background: #fff1e0; border-color: #ffd9a5; color: #b45f1b; }
+        button.danger { background: #ffe6e5; border-color: #ffcdca; color: #bc3f2e; }
+        .image-gallery { background: #fefefe; border-radius: 28px; border: 1px solid #e0ecf2; padding: 20px 16px; margin: 20px 0 12px; }
+        .grid-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; max-height: 420px; overflow-y: auto; }
+        .image-card { background: #fff; border-radius: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); cursor: grab; border: 1px solid #eef2f5; }
+        .image-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 16px 16px 0 0; }
+        .img-info { padding: 6px; display: flex; justify-content: space-between; font-size: 0.7rem; }
+        .remove-img-btn { background: none; border: none; cursor: pointer; color: #9bb7c9; }
+        .footer-panel { margin-top: 40px; background: #ffffffdd; border-radius: 32px; border: 1px solid #dce7ef; padding: 20px 28px; display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; }
+        .ad-section { flex: 2; min-width: 240px; background: #fafdff; border-radius: 24px; padding: 12px 20px; border: 1px solid #e0ecf5; }
+        .message-section { flex: 1.5; min-width: 260px; background: #fafdff; border-radius: 24px; padding: 12px 20px; border: 1px solid #e0ecf5; }
+        .message-item { background: #fef9e6; border-left: 4px solid #f4b942; padding: 10px; margin: 12px 0; border-radius: 16px; }
+        textarea, input { border-radius: 32px; border: 1px solid #cbdde6; padding: 10px 16px; width: 100%; margin: 6px 0; }
+        .info-hint { font-size: 0.7rem; color: #5584a0; margin-top: 8px; }
+        i { margin-right: 6px; }
+        @media (max-width: 780px) { .footer-panel { flex-direction: column; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="tool-header">
         <div style="display: flex; align-items: center; gap: 12px;">
-            <h1>📦 WLBpdf工具包 <span style="font-size:0.9rem;">· 专业版</span></h1>
-            <div class="version-badge">v4.0 · 智能转换</div>
+            <h1>📦 WLBpdf工具包 <span style="font-size:0.9rem;">· 云端版</span></h1>
+            <div class="version-badge">v5.0 · 全局同步</div>
         </div>
     </div>
-    <div class="sub">🖼️ 可视化图片转PDF · 🔗 合并PDF · 🖨️ PDF逐页导出高清图片 | 留言反馈将直达后台</div>
+    <div class="sub">🖼️ 可视化图片转PDF · 🔗 合并PDF · 🖨️ PDF逐页导出高清图片 | 留言全局同步</div>
 
     <div class="card-grid">
-        <!-- 功能1 图片打包PDF -->
         <div class="card">
             <h2>🖼️ ① 图片打包PDF <span style="font-size:0.7rem;">拖拽排序·网格预览</span></h2>
             <div class="btn-group">
@@ -247,7 +70,6 @@
             <div class="info-hint">✔ 拖拽卡片可调整顺序，所见即所得</div>
         </div>
 
-        <!-- 功能2 合并PDF -->
         <div class="card">
             <h2>📑 ② 合并PDF文档</h2>
             <div class="btn-group">
@@ -261,7 +83,6 @@
             <button id="mergePdfBtnWLB" class="primary" style="background:#5f6caf;">🔗 合并并保存PDF</button>
         </div>
 
-        <!-- 功能3 PDF转图片 -->
         <div class="card">
             <h2>🖨️ ③ PDF → 图片</h2>
             <div class="btn-group">
@@ -276,31 +97,31 @@
         </div>
     </div>
 
-    <!-- 底部区域：广告栏 + 留言板 -->
     <div class="footer-panel">
         <div class="ad-section">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3><i class="fas fa-ad"></i> 推广位</h3>
-                <span style="font-size:0.7rem; color:#7f8c8d;">由管理员远程配置</span>
-            </div>
+            <h3><i class="fas fa-ad"></i> 推广位</h3>
             <div id="adContentDisplay" style="margin-top: 12px; padding: 12px; background: #fef7e0; border-radius: 28px; text-align: center;">
-                <a href="#" id="adLink" target="_blank" style="text-decoration: none; font-weight: 600; color: #2c7da0;">⭐ 推荐工具：WLB智能办公助手 → 点击体验</a>
+                <a href="#" id="adLink" target="_blank" style="text-decoration: none; font-weight: 600; color: #2c7da0;">加载中...</a>
             </div>
-            <div class="info-hint">* 广告链接由后台统一管理，实时生效。</div>
         </div>
         <div class="message-section">
             <h3><i class="fas fa-envelope"></i> 留言板</h3>
-            <textarea id="msgInput" rows="2" placeholder="写下您的反馈或建议，管理员将在后台查看..."></textarea>
+            <textarea id="msgInput" rows="2" placeholder="写下您的反馈或建议，所有留言管理员可见..."></textarea>
             <button id="sendMsgBtn" style="width:100%; background:#2c7da0; color:white;">✉️ 发送留言</button>
-            <div id="msgListArea" style="max-height: 160px; overflow-y: auto; margin-top: 12px;">
-                <div class="info-hint">暂无留言，留下您的宝贵意见</div>
-            </div>
-            <div class="private-note"><i class="fas fa-lock"></i> 留言内容仅管理员在后台可见</div>
+            <div id="msgListArea" style="max-height: 160px; overflow-y: auto; margin-top: 12px;"></div>
+            <div class="info-hint"><i class="fas fa-globe"></i> 留言全局同步，所有用户可见</div>
         </div>
     </div>
 </div>
 
 <script>
+    // ========== Supabase 配置已填入 ==========
+    const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_Af-oWa-CrwGSO-ctc79wtQ_nD060jw1";
+    // =========================================
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     
     let wlbImageFiles = [];
@@ -308,79 +129,61 @@
     let currentPdfForImage = null;
     let sortableGrid = null;
     
-    let stats = {
-        pdfFromImages: 0,
-        mergePdfCount: 0,
-        pdfToImageCount: 0,
-        lastActive: new Date().toISOString()
-    };
-    
-    let messages = [];
-    let adConfig = {
-        linkText: "⭐ 推荐工具：WLB智能办公助手 → 点击体验",
-        linkUrl: "https://www.example.com/wlb-promo"
-    };
-    
-    function loadStorageData() {
-        const savedStats = localStorage.getItem('WLB_stats');
-        if(savedStats) { try { stats = JSON.parse(savedStats); } catch(e) {} }
-        const savedMsgs = localStorage.getItem('WLB_messages');
-        if(savedMsgs) { try { messages = JSON.parse(savedMsgs); } catch(e) {} }
-        const savedAd = localStorage.getItem('WLB_adConfig');
-        if(savedAd) { try { adConfig = JSON.parse(savedAd); } catch(e) {} }
-        updateMessagesDisplay();
-        updateAdDisplay();
-        startAdPolling();
+    // 加载广告配置
+    async function loadAdConfig() {
+        const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
+        if (error) { console.error('加载广告失败:', error); return; }
+        if (data && data.length > 0) {
+            document.getElementById('adLink').innerText = data[0].link_text;
+            document.getElementById('adLink').href = data[0].link_url;
+        }
     }
     
-    function saveStats() { localStorage.setItem('WLB_stats', JSON.stringify(stats)); }
-    function saveMessages() { localStorage.setItem('WLB_messages', JSON.stringify(messages)); updateMessagesDisplay(); }
-    function saveAdConfig() { localStorage.setItem('WLB_adConfig', JSON.stringify(adConfig)); updateAdDisplay(); }
-    
-    function updateMessagesDisplay() {
-        const msgArea = document.getElementById('msgListArea');
-        if(!msgArea) return;
-        if(messages.length === 0) {
-            msgArea.innerHTML = '<div class="info-hint">暂无留言，留下您的宝贵意见</div>';
+    // 加载留言
+    async function loadMessages() {
+        const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
+        if (error) { console.error('加载留言失败:', error); return; }
+        const container = document.getElementById('msgListArea');
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div class="info-hint">暂无留言，成为第一个留言的人</div>';
             return;
         }
-        const recent = messages.slice(-3).reverse();
         let html = '';
-        recent.forEach(msg => {
-            html += `<div class="message-item" style="background:#f5f7fb;"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
+        data.forEach(msg => {
+            html += `<div class="message-item"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
         });
-        if(messages.length > 3) {
-            html += `<div class="info-hint" style="text-align:center;">共 ${messages.length} 条留言，管理员可见全部</div>`;
+        container.innerHTML = html;
+    }
+    
+    // 发送留言
+    async function sendMessage() {
+        const text = document.getElementById('msgInput').value.trim();
+        if (!text) { alert('请输入留言内容'); return; }
+        const { error } = await supabase.from('messages').insert([{ text: text, time: new Date().toISOString() }]);
+        if (error) { alert('发送失败: ' + error.message); return; }
+        document.getElementById('msgInput').value = '';
+        await loadMessages();
+        alert('留言已发送！');
+    }
+    
+    // 更新统计（使用次数+1）
+    async function incrementStat(type) {
+        const { data, error } = await supabase.from('stats').select('*').limit(1);
+        if (error) { console.error('获取统计失败:', error); return; }
+        if (data && data.length > 0) {
+            const current = data[0];
+            let updates = {};
+            if (type === 'pdf') updates.pdf_from_images = (current.pdf_from_images || 0) + 1;
+            if (type === 'merge') updates.merge_pdf_count = (current.merge_pdf_count || 0) + 1;
+            if (type === 'image') updates.pdf_to_image_count = (current.pdf_to_image_count || 0) + 1;
+            updates.last_active = new Date().toISOString();
+            await supabase.from('stats').update(updates).eq('id', current.id);
         }
-        msgArea.innerHTML = html;
     }
     
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     
-    function updateAdDisplay() {
-        const adLink = document.getElementById('adLink');
-        if(adLink) { adLink.innerText = adConfig.linkText; adLink.href = adConfig.linkUrl; }
-    }
-    
-    function startAdPolling() {
-        let lastAdJson = JSON.stringify(adConfig);
-        setInterval(() => {
-            const savedAd = localStorage.getItem('WLB_adConfig');
-            if(savedAd) {
-                try {
-                    const newAd = JSON.parse(savedAd);
-                    if(JSON.stringify(newAd) !== lastAdJson) {
-                        adConfig = newAd;
-                        updateAdDisplay();
-                        lastAdJson = JSON.stringify(adConfig);
-                    }
-                } catch(e) {}
-            }
-        }, 2000);
-    }
-    
-    function updateLastActive() { stats.lastActive = new Date().toISOString(); saveStats(); }
-    
+    // 图片网格渲染
     function renderImageGrid() {
         const gridContainer = document.getElementById('gridPreviewList');
         if (!gridContainer) return;
@@ -443,7 +246,7 @@
         }
         const blob = pdf.output('blob');
         await saveWithPicker(blob, `WLB_图片包_${Date.now()}.pdf`);
-        stats.pdfFromImages++; saveStats(); updateLastActive();
+        await incrementStat('pdf');
     }
     
     async function saveWithPicker(blob, name) {
@@ -471,7 +274,7 @@
         }
         const bytes = await merged.save();
         await saveWithPicker(new Blob([bytes],{type:'application/pdf'}), `WLB_合并_${Date.now()}.pdf`);
-        stats.mergePdfCount++; saveStats(); updateLastActive();
+        await incrementStat('merge');
     }
     
     function renderMergeUI() {
@@ -506,17 +309,8 @@
             await saveWithPicker(blob, `${pdfFile.name.replace('.pdf','')}_page${i}.png`);
             progress.innerText = `已导出 ${i}/${total}`;
         }
-        stats.pdfToImageCount++; saveStats(); updateLastActive();
+        await incrementStat('image');
         progress.innerText = `✅ 导出完成共${total}张`;
-    }
-    
-    function sendMessage() {
-        const txt = document.getElementById('msgInput').value.trim();
-        if(!txt) { alert("请输入留言内容"); return; }
-        messages.push({ text: txt, time: new Date().toISOString(), id: Date.now() + Math.random() });
-        saveMessages();
-        document.getElementById('msgInput').value = '';
-        alert('留言已发送，感谢反馈！');
     }
     
     document.getElementById('selectImagesWLB').addEventListener('change',(e)=>{ addImageFiles(e.target.files); e.target.value=''; });
@@ -530,11 +324,12 @@
     document.getElementById('convertPdfToImagesWLB').addEventListener('click',()=>{ if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
     document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
     
-    loadStorageData();
+    loadAdConfig();
+    loadMessages();
     renderImageGrid();
     renderMergeUI();
-    updateLastActive();
-    setInterval(()=>{ updateLastActive(); }, 60000);
+    
+    setInterval(() => { loadAdConfig(); loadMessages(); }, 30000);
 </script>
 </body>
 </html>
