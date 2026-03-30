@@ -3,333 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WLBpdf工具包 · 云端版 | 图片转PDF | 合并PDF | PDF转图片</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>WLB工具包 · 云端后台</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
-        body { background: #f0f4fa; margin: 0; padding: 28px 20px 60px; color: #0a1c2f; }
-        .container { max-width: 1500px; margin: 0 auto; }
-        .tool-header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; margin-bottom: 1rem; }
-        h1 { font-size: 2rem; font-weight: 700; background: linear-gradient(145deg, #0f2b3d, #1e4a6b); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0; }
-        .version-badge { background: #e9eef3; padding: 4px 12px; border-radius: 60px; font-size: 0.8rem; color: #2c5a7a; }
-        .sub { color: #3a5a78; margin-bottom: 28px; border-left: 4px solid #2c7da0; padding-left: 16px; }
-        .card-grid { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 20px; }
-        .card { background: white; border-radius: 32px; box-shadow: 0 12px 28px -8px rgba(0,0,0,0.08); flex: 1; min-width: 340px; padding: 1.6rem 1.8rem; border: 1px solid #e2edf2; }
-        .card h2 { font-size: 1.55rem; margin: 0 0 0.8rem 0; display: flex; gap: 10px; border-bottom: 2px solid #eef2fa; padding-bottom: 0.6rem; }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 16px; }
-        button { background: #f8fafd; border: 1px solid #cbdde6; padding: 8px 18px; border-radius: 44px; font-weight: 500; cursor: pointer; transition: 0.2s; font-size: 0.85rem; color: #1f3e54; }
-        button.primary { background: #2c7da0; border-color: #2c7da0; color: white; }
-        button.primary:hover { background: #1f6392; transform: translateY(-2px); }
-        button.warning { background: #fff1e0; border-color: #ffd9a5; color: #b45f1b; }
-        button.danger { background: #ffe6e5; border-color: #ffcdca; color: #bc3f2e; }
-        .image-gallery { background: #fefefe; border-radius: 28px; border: 1px solid #e0ecf2; padding: 20px 16px; margin: 20px 0 12px; }
-        .grid-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 14px; max-height: 420px; overflow-y: auto; }
-        .image-card { background: #fff; border-radius: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); cursor: grab; border: 1px solid #eef2f5; }
-        .image-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 16px 16px 0 0; }
-        .img-info { padding: 6px; display: flex; justify-content: space-between; font-size: 0.7rem; }
-        .remove-img-btn { background: none; border: none; cursor: pointer; color: #9bb7c9; }
-        .footer-panel { margin-top: 40px; background: #ffffffdd; border-radius: 32px; border: 1px solid #dce7ef; padding: 20px 28px; display: flex; flex-wrap: wrap; gap: 28px; justify-content: space-between; }
-        .ad-section { flex: 2; min-width: 240px; background: #fafdff; border-radius: 24px; padding: 12px 20px; border: 1px solid #e0ecf5; }
-        .message-section { flex: 1.5; min-width: 260px; background: #fafdff; border-radius: 24px; padding: 12px 20px; border: 1px solid #e0ecf5; }
-        .message-item { background: #fef9e6; border-left: 4px solid #f4b942; padding: 10px; margin: 12px 0; border-radius: 16px; }
-        textarea, input { border-radius: 32px; border: 1px solid #cbdde6; padding: 10px 16px; width: 100%; margin: 6px 0; }
-        .info-hint { font-size: 0.7rem; color: #5584a0; margin-top: 8px; }
-        i { margin-right: 6px; }
-        @media (max-width: 780px) { .footer-panel { flex-direction: column; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1a2a3a 0%, #0f1a24 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .login-container { background: white; border-radius: 32px; padding: 40px 36px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); text-align: center; }
+        .login-container h2 { font-size: 28px; margin-bottom: 8px; color: #1e3a5f; }
+        .login-logo { font-size: 48px; margin-bottom: 16px; color: #2c7da0; }
+        .input-group { margin: 20px 0; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 500; color: #334155; }
+        .input-group input { width: 100%; padding: 12px 16px; border: 2px solid #e2e8f0; border-radius: 28px; font-size: 15px; }
+        .input-group input:focus { outline: none; border-color: #2c7da0; }
+        .login-btn { width: 100%; background: #2c7da0; color: white; border: none; padding: 12px; border-radius: 40px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .login-btn:hover { background: #1f6392; }
+        .error-msg { color: #e53e3e; margin-top: 12px; }
+        .dashboard-container { width: 100%; max-width: 1400px; background: #f1f5f9; border-radius: 32px; overflow: hidden; }
+        .dashboard-header { background: white; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid #e2e8f0; }
+        .dashboard-header h1 { font-size: 24px; color: #0f2b3d; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 8px 20px; border-radius: 40px; cursor: pointer; }
+        .dashboard-content { padding: 32px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 40px; }
+        .stat-card { background: white; border-radius: 24px; padding: 24px; }
+        .stat-card i { font-size: 32px; color: #2c7da0; margin-bottom: 12px; }
+        .stat-number { font-size: 36px; font-weight: 800; color: #1e293b; }
+        .stat-label { color: #64748b; margin-top: 8px; }
+        .config-section, .messages-section { background: white; border-radius: 24px; padding: 28px; margin-bottom: 32px; }
+        .section-title { font-size: 20px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; flex-wrap: wrap; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-group input { width: 100%; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 28px; }
+        .save-btn { background: #2c7da0; color: white; border: none; padding: 10px 28px; border-radius: 40px; cursor: pointer; }
+        .preview-box { background: #fef7e0; padding: 16px; border-radius: 20px; margin-top: 16px; text-align: center; }
+        .message-list { max-height: 450px; overflow-y: auto; }
+        .message-item { background: #f8fafc; border-left: 4px solid #f4b942; padding: 16px; margin-bottom: 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
+        .message-time { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+        .delete-msg { background: #fee2e2; border: none; padding: 6px 14px; border-radius: 30px; cursor: pointer; color: #dc2626; }
+        .empty-msg { text-align: center; padding: 50px; color: #94a3b8; }
+        .refresh-btn { background: #e2e8f0; border: none; padding: 6px 16px; border-radius: 30px; cursor: pointer; margin-left: 12px; }
+        .status-badge { background: #10b981; color: white; padding: 4px 12px; border-radius: 30px; font-size: 12px; }
+        .info-tip { background: #eef2ff; padding: 12px 16px; border-radius: 20px; margin-top: 16px; font-size: 13px; }
+        @media (max-width: 768px) { .dashboard-content { padding: 20px; } }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="tool-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <h1>📦 WLBpdf工具包 <span style="font-size:0.9rem;">· 云端版</span></h1>
-            <div class="version-badge">v5.0 · 全局同步</div>
-        </div>
+    <div id="loginPanel" class="login-container">
+        <div class="login-logo"><i class="fas fa-chalkboard-user"></i></div>
+        <h2>WLB 云端后台</h2>
+        <p style="color: #64748b; margin-bottom: 24px;">全局数据管理 · 所有用户同步</p>
+        <div class="input-group"><label><i class="fas fa-user"></i> 用户名</label><input type="text" id="loginUsername" placeholder="wilink"></div>
+        <div class="input-group"><label><i class="fas fa-lock"></i> 密码</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+        <button class="login-btn" id="doLoginBtn"><i class="fas fa-sign-in-alt"></i> 登录后台</button>
+        <div id="loginError" class="error-msg"></div>
     </div>
-    <div class="sub">🖼️ 可视化图片转PDF · 🔗 合并PDF · 🖨️ PDF逐页导出高清图片 | 留言全局同步</div>
 
-    <div class="card-grid">
-        <div class="card">
-            <h2>🖼️ ① 图片打包PDF <span style="font-size:0.7rem;">拖拽排序·网格预览</span></h2>
-            <div class="btn-group">
-                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; border:1px solid #bdd9e8; cursor:pointer;">
-                    📂 选择图片(多选)
-                    <input type="file" id="selectImagesWLB" multiple accept="image/jpeg,image/png,image/jpg,image/bmp,image/webp" style="display:none;">
-                </label>
-                <button id="appendImagesWLB" class="warning">➕ 追加</button>
-                <button id="clearImagesWLB" class="danger">🗑️ 清空</button>
-            </div>
-            <div class="image-gallery">
-                <div id="gridPreviewList" class="grid-preview"><div class="info-hint" style="text-align:center;">✨ 暂无图片，点击添加</div></div>
-            </div>
-            <button id="generatePdfFromImagesWLB" class="primary" style="background:#1f7b5a;">✨ 生成PDF并保存</button>
-            <div class="info-hint">✔ 拖拽卡片可调整顺序，所见即所得</div>
+    <div id="dashboardPanel" class="dashboard-container" style="display: none;">
+        <div class="dashboard-header">
+            <h1><i class="fas fa-tachometer-alt"></i> WLBpdf工具包 · 云端管理后台</h1>
+            <div><span><i class="fas fa-user-shield"></i> 管理员: wilink</span>
+            <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 退出</button></div>
         </div>
-
-        <div class="card">
-            <h2>📑 ② 合并PDF文档</h2>
-            <div class="btn-group">
-                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; border:1px solid #bdd9e8; cursor:pointer;">
-                    📂 选择多个PDF
-                    <input type="file" id="mergePdfInputWLB" multiple accept="application/pdf" style="display:none;">
-                </label>
-                <button id="clearMergeListWLB" class="danger">清空列表</button>
+        <div class="dashboard-content">
+            <div class="stats-grid">
+                <div class="stat-card"><i class="fas fa-images"></i><div class="stat-number" id="statPdfCount">0</div><div class="stat-label">图片打包PDF总次数</div></div>
+                <div class="stat-card"><i class="fas fa-file-pdf"></i><div class="stat-number" id="statMergeCount">0</div><div class="stat-label">合并PDF总次数</div></div>
+                <div class="stat-card"><i class="fas fa-camera"></i><div class="stat-number" id="statImgCount">0</div><div class="stat-label">PDF转图片总次数</div></div>
+                <div class="stat-card"><i class="fas fa-calendar-alt"></i><div class="stat-number" id="lastActiveTime">-</div><div class="stat-label">最后活跃时间</div></div>
             </div>
-            <div id="pdfMergeListWLB" style="max-height:220px; overflow-y:auto; margin:12px 0;"></div>
-            <button id="mergePdfBtnWLB" class="primary" style="background:#5f6caf;">🔗 合并并保存PDF</button>
-        </div>
 
-        <div class="card">
-            <h2>🖨️ ③ PDF → 图片</h2>
-            <div class="btn-group">
-                <label style="background:#eef3fc; border-radius:44px; padding:8px 18px; cursor:pointer;">
-                    📂 选择PDF文档
-                    <input type="file" id="pdfToImageInputWLB" accept="application/pdf" style="display:none;">
-                </label>
+            <div class="config-section">
+                <div class="section-title"><i class="fas fa-ad"></i> 远程广告推送 <span class="status-badge"><i class="fas fa-globe"></i> 全局生效</span></div>
+                <div class="form-group"><label>广告链接文字</label><input type="text" id="adLinkText" placeholder="广告文字"></div>
+                <div class="form-group"><label>广告跳转URL</label><input type="url" id="adLinkUrl" placeholder="https://"></div>
+                <button class="save-btn" id="saveAdConfigBtn"><i class="fas fa-cloud-upload-alt"></i> 推送到所有用户</button>
+                <div class="preview-box"><i class="fas fa-eye"></i> 预览：<br><a href="#" id="previewAdLink" target="_blank" style="color:#2c7da0;">加载中...</a></div>
+                <div class="info-tip"><i class="fas fa-info-circle"></i> 修改后所有用户的广告将在30秒内自动更新</div>
             </div>
-            <div id="pdfSelectedStatus" class="info-hint" style="background:#eef4fa; padding:8px; border-radius:28px;">未选择PDF</div>
-            <button id="convertPdfToImagesWLB" class="primary" style="background:#c97e5a;">🖼️ 导出为图片(逐页)</button>
-            <div id="pdfConvertProgressWLB" class="info-hint"></div>
+
+            <div class="messages-section">
+                <div class="section-title"><i class="fas fa-envelope"></i> 全局留言板 <button id="refreshMessagesBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> 刷新</button><button id="clearAllMessagesBtn" class="refresh-btn" style="background:#fee2e2; color:#dc2626;"><i class="fas fa-trash-alt"></i> 清空所有留言</button></div>
+                <div id="adminMessagesList" class="message-list"><div class="empty-msg">加载中...</div></div>
+                <div class="info-tip"><i class="fas fa-lock"></i> 所有用户留言实时同步，可删除或一键清空</div>
+            </div>
         </div>
     </div>
 
-    <div class="footer-panel">
-        <div class="ad-section">
-            <h3><i class="fas fa-ad"></i> 推广位</h3>
-            <div id="adContentDisplay" style="margin-top: 12px; padding: 12px; background: #fef7e0; border-radius: 28px; text-align: center;">
-                <a href="#" id="adLink" target="_blank" style="text-decoration: none; font-weight: 600; color: #2c7da0;">加载中...</a>
-            </div>
-        </div>
-        <div class="message-section">
-            <h3><i class="fas fa-envelope"></i> 留言板</h3>
-            <textarea id="msgInput" rows="2" placeholder="写下您的反馈或建议，所有留言管理员可见..."></textarea>
-            <button id="sendMsgBtn" style="width:100%; background:#2c7da0; color:white;">✉️ 发送留言</button>
-            <div id="msgListArea" style="max-height: 160px; overflow-y: auto; margin-top: 12px;"></div>
-            <div class="info-hint"><i class="fas fa-globe"></i> 留言全局同步，所有用户可见</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ========== Supabase 配置已填入 ==========
-    const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_Af-oWa-CrwGSO-ctc79wtQ_nD060jw1";
-    // =========================================
-    
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    
-    let wlbImageFiles = [];
-    let mergePdfList = [];
-    let currentPdfForImage = null;
-    let sortableGrid = null;
-    
-    // 加载广告配置
-    async function loadAdConfig() {
-        const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
-        if (error) { console.error('加载广告失败:', error); return; }
-        if (data && data.length > 0) {
-            document.getElementById('adLink').innerText = data[0].link_text;
-            document.getElementById('adLink').href = data[0].link_url;
-        }
-    }
-    
-    // 加载留言
-    async function loadMessages() {
-        const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
-        if (error) { console.error('加载留言失败:', error); return; }
-        const container = document.getElementById('msgListArea');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="info-hint">暂无留言，成为第一个留言的人</div>';
-            return;
-        }
-        let html = '';
-        data.forEach(msg => {
-            html += `<div class="message-item"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
-        });
-        container.innerHTML = html;
-    }
-    
-    // 发送留言
-    async function sendMessage() {
-        const text = document.getElementById('msgInput').value.trim();
-        if (!text) { alert('请输入留言内容'); return; }
-        const { error } = await supabase.from('messages').insert([{ text: text, time: new Date().toISOString() }]);
-        if (error) { alert('发送失败: ' + error.message); return; }
-        document.getElementById('msgInput').value = '';
-        await loadMessages();
-        alert('留言已发送！');
-    }
-    
-    // 更新统计（使用次数+1）
-    async function incrementStat(type) {
-        const { data, error } = await supabase.from('stats').select('*').limit(1);
-        if (error) { console.error('获取统计失败:', error); return; }
-        if (data && data.length > 0) {
-            const current = data[0];
-            let updates = {};
-            if (type === 'pdf') updates.pdf_from_images = (current.pdf_from_images || 0) + 1;
-            if (type === 'merge') updates.merge_pdf_count = (current.merge_pdf_count || 0) + 1;
-            if (type === 'image') updates.pdf_to_image_count = (current.pdf_to_image_count || 0) + 1;
-            updates.last_active = new Date().toISOString();
-            await supabase.from('stats').update(updates).eq('id', current.id);
-        }
-    }
-    
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    
-    // 图片网格渲染
-    function renderImageGrid() {
-        const gridContainer = document.getElementById('gridPreviewList');
-        if (!gridContainer) return;
-        if (wlbImageFiles.length === 0) {
-            gridContainer.innerHTML = `<div class="info-hint" style="text-align:center;">📭 暂无图片，点击上方添加</div>`;
-            if (sortableGrid) sortableGrid.destroy();
-            return;
-        }
-        let html = '';
-        wlbImageFiles.forEach((file, idx) => {
-            const previewUrl = URL.createObjectURL(file);
-            html += `<div class="image-card" data-idx="${idx}"><img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')"><div class="img-info"><span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span><button class="remove-img-btn" data-remove-idx="${idx}">✖</button></div></div>`;
-        });
-        gridContainer.innerHTML = html;
-        document.querySelectorAll('.remove-img-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = parseInt(btn.getAttribute('data-remove-idx'));
-                if (!isNaN(idx)) { wlbImageFiles.splice(idx,1); renderImageGrid(); }
-            });
-        });
-        if (sortableGrid) sortableGrid.destroy();
-        sortableGrid = new Sortable(gridContainer, {
-            animation: 200,
-            handle: '.image-card',
-            onEnd: (evt) => {
-                if (evt.oldIndex !== undefined && evt.newIndex !== undefined && evt.oldIndex !== evt.newIndex) {
-                    const moved = wlbImageFiles.splice(evt.oldIndex, 1)[0];
-                    wlbImageFiles.splice(evt.newIndex, 0, moved);
-                    renderImageGrid();
-                }
-            }
-        });
-    }
-    
-    function addImageFiles(files) {
-        if(!files.length) return;
-        const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
-        if(imgs.length) { wlbImageFiles.push(...imgs); renderImageGrid(); }
-        else alert("不支持的图片格式");
-    }
-    
-    async function generateWlbPdf() {
-        if(wlbImageFiles.length === 0) { alert("请添加图片"); return; }
-        if(typeof window.jspdf === 'undefined') {
-            await new Promise(r=>{let s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'; s.onload=r; document.head.appendChild(s);});
-        }
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF();
-        let first = true;
-        for(let f of wlbImageFiles) {
-            const dataUrl = await new Promise(r=>{let fr=new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(f);});
-            const img = new Image(); await new Promise(r=>{img.onload=r; img.src=dataUrl;});
-            const pdfW = pdf.internal.pageSize.getWidth();
-            const pdfH = pdf.internal.pageSize.getHeight();
-            let ratio = Math.min(pdfW/img.width, pdfH/img.height);
-            let w = img.width*ratio, h = img.height*ratio;
-            if(!first) pdf.addPage();
-            pdf.addImage(dataUrl, 'JPEG', (pdfW-w)/2, (pdfH-h)/2, w, h);
-            first=false;
-        }
-        const blob = pdf.output('blob');
-        await saveWithPicker(blob, `WLB_图片包_${Date.now()}.pdf`);
-        await incrementStat('pdf');
-    }
-    
-    async function saveWithPicker(blob, name) {
-        try {
-            if('showSaveFilePicker' in window) {
-                const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{accept: {'application/pdf': ['.pdf']}}] });
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-            } else {
-                const a=document.createElement('a'); const url=URL.createObjectURL(blob); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
-            }
-        } catch(e) { if(e.name !== 'AbortError') alert("保存失败"+e.message); }
-    }
-    
-    async function mergePdfsAction() {
-        if(mergePdfList.length===0){ alert("请添加PDF"); return; }
-        const PDFLib = window.PDFLib;
-        const merged = await PDFLib.PDFDocument.create();
-        for(let file of mergePdfList) {
-            const buf = await file.arrayBuffer();
-            const doc = await PDFLib.PDFDocument.load(buf);
-            const pages = await merged.copyPages(doc, doc.getPageIndices());
-            pages.forEach(p=>merged.addPage(p));
-        }
-        const bytes = await merged.save();
-        await saveWithPicker(new Blob([bytes],{type:'application/pdf'}), `WLB_合并_${Date.now()}.pdf`);
-        await incrementStat('merge');
-    }
-    
-    function renderMergeUI() {
-        const c = document.getElementById('pdfMergeListWLB');
-        if(!mergePdfList.length){ c.innerHTML='<div class="info-hint" style="text-align:center;">暂无PDF</div>'; return; }
-        let html='';
-        mergePdfList.forEach((f,i)=> {
-            html+=`<div style="display:flex; justify-content:space-between; background:#fff; margin:6px 0; padding:8px 12px; border-radius:40px;"><span>📄 ${f.name}</span><button class="delMerge" data-idx="${i}" style="border:none; background:none;">✖</button></div>`;
-        });
-        c.innerHTML=html;
-        document.querySelectorAll('.delMerge').forEach(btn=>{
-            btn.addEventListener('click',(e)=>{
-                let idx=parseInt(btn.dataset.idx); mergePdfList.splice(idx,1); renderMergeUI();
-            });
-        });
-    }
-    
-    async function pdfToImagesAction(pdfFile) {
-        if(!pdfFile) return;
-        const progress = document.getElementById('pdfConvertProgressWLB');
-        progress.innerText = "解析中...";
-        const buf = await pdfFile.arrayBuffer();
-        const doc = await pdfjsLib.getDocument({data: buf}).promise;
-        const total = doc.numPages;
-        for(let i=1;i<=total;i++) {
-            const page = await doc.getPage(i);
-            const viewport = page.getViewport({scale:2.5});
-            const canvas = document.createElement('canvas');
-            canvas.width = viewport.width; canvas.height = viewport.height;
-            await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
-            const blob = await new Promise(r=>canvas.toBlob(r,'image/png'));
-            await saveWithPicker(blob, `${pdfFile.name.replace('.pdf','')}_page${i}.png`);
-            progress.innerText = `已导出 ${i}/${total}`;
-        }
-        await incrementStat('image');
-        progress.innerText = `✅ 导出完成共${total}张`;
-    }
-    
-    document.getElementById('selectImagesWLB').addEventListener('change',(e)=>{ addImageFiles(e.target.files); e.target.value=''; });
-    document.getElementById('appendImagesWLB').addEventListener('click',()=>document.getElementById('selectImagesWLB').click());
-    document.getElementById('clearImagesWLB').addEventListener('click',()=>{ if(confirm('清空所有图片？')){ wlbImageFiles=[]; renderImageGrid(); } });
-    document.getElementById('generatePdfFromImagesWLB').addEventListener('click', generateWlbPdf);
-    document.getElementById('mergePdfInputWLB').addEventListener('change',(e)=>{ if(e.target.files.length) { mergePdfList.push(...Array.from(e.target.files)); renderMergeUI(); } e.target.value=''; });
-    document.getElementById('clearMergeListWLB').addEventListener('click',()=>{ if(confirm('清空合并列表')){ mergePdfList=[]; renderMergeUI(); } });
-    document.getElementById('mergePdfBtnWLB').addEventListener('click', mergePdfsAction);
-    document.getElementById('pdfToImageInputWLB').addEventListener('change',(e)=>{ if(e.target.files[0]) { currentPdfForImage=e.target.files[0]; document.getElementById('pdfSelectedStatus').innerHTML=`📄 ${currentPdfForImage.name}`; } e.target.value=''; });
-    document.getElementById('convertPdfToImagesWLB').addEventListener('click',()=>{ if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
-    document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
-    
-    loadAdConfig();
-    loadMessages();
-    renderImageGrid();
-    renderMergeUI();
-    
-    setInterval(() => { loadAdConfig(); loadMessages(); }, 30000);
-</script>
-</body>
-</html>
+    <script>
+        //
