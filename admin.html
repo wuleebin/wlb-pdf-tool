@@ -90,4 +90,111 @@
     </div>
 
     <script>
-        //
+        // ========== Supabase 配置已填入 ==========
+        const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_Af-oWa-CrwGSO-ctc79wtQ_nD060jw1";
+        // =========================================
+        
+        const ADMIN_USER = "wilink";
+        const ADMIN_PASS = "wlb0404";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        async function loadStats() {
+            const { data } = await supabase.from('stats').select('*').limit(1);
+            if (data && data.length) {
+                document.getElementById('statPdfCount').innerText = data[0].pdf_from_images || 0;
+                document.getElementById('statMergeCount').innerText = data[0].merge_pdf_count || 0;
+                document.getElementById('statImgCount').innerText = data[0].pdf_to_image_count || 0;
+                document.getElementById('lastActiveTime').innerText = data[0].last_active ? new Date(data[0].last_active).toLocaleString() : '-';
+            }
+        }
+        
+        async function loadMessages() {
+            const { data } = await supabase.from('messages').select('*').order('time', { ascending: false });
+            const container = document.getElementById('adminMessagesList');
+            if (!data || data.length === 0) { container.innerHTML = '<div class="empty-msg">暂无留言</div>'; return; }
+            let html = '';
+            data.forEach(msg => {
+                html += `<div class="message-item"><div><div class="message-time">${new Date(msg.time).toLocaleString()}</div><div>${escapeHtml(msg.text)}</div></div><button class="delete-msg" data-id="${msg.id}">删除</button></div>`;
+            });
+            container.innerHTML = html;
+            document.querySelectorAll('.delete-msg').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const id = parseInt(btn.dataset.id);
+                    await supabase.from('messages').delete().eq('id', id);
+                    loadMessages();
+                });
+            });
+        }
+        
+        async function loadAdConfig() {
+            const { data } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
+            if (data && data.length) {
+                document.getElementById('adLinkText').value = data[0].link_text;
+                document.getElementById('adLinkUrl').value = data[0].link_url;
+                document.getElementById('previewAdLink').innerText = data[0].link_text;
+                document.getElementById('previewAdLink').href = data[0].link_url;
+            }
+        }
+        
+        async function saveAdConfig() {
+            const newText = document.getElementById('adLinkText').value.trim();
+            const newUrl = document.getElementById('adLinkUrl').value.trim();
+            if (!newText) { alert('广告文字不能为空'); return; }
+            await supabase.from('ad_config').update({ link_text: newText, link_url: newUrl || '#', updated_at: new Date() }).eq('id', 1);
+            loadAdConfig();
+            alert('✅ 广告已推送到所有用户！');
+        }
+        
+        async function clearAllMessages() {
+            if (confirm('⚠️ 确定清空所有留言吗？不可恢复！')) {
+                await supabase.from('messages').delete().neq('id', 0);
+                loadMessages();
+                alert('✅ 所有留言已清空');
+            }
+        }
+        
+        function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+        
+        function checkAuth() {
+            const isLogged = sessionStorage.getItem('wlb_admin_logged');
+            if (isLogged === 'true') { showDashboard(); } else { showLogin(); }
+        }
+        
+        function showLogin() {
+            document.getElementById('loginPanel').style.display = 'block';
+            document.getElementById('dashboardPanel').style.display = 'none';
+        }
+        
+        function showDashboard() {
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('dashboardPanel').style.display = 'block';
+            loadStats(); loadMessages(); loadAdConfig();
+            if (window.dashboardInterval) clearInterval(window.dashboardInterval);
+            window.dashboardInterval = setInterval(() => { loadStats(); loadMessages(); }, 5000);
+        }
+        
+        function logout() { sessionStorage.removeItem('wlb_admin_logged'); if(window.dashboardInterval) clearInterval(window.dashboardInterval); showLogin(); }
+        
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (username === ADMIN_USER && password === ADMIN_PASS) {
+                sessionStorage.setItem('wlb_admin_logged', 'true');
+                showDashboard();
+            } else {
+                document.getElementById('loginError').innerText = '用户名或密码错误';
+            }
+        }
+        
+        document.getElementById('doLoginBtn').addEventListener('click', attemptLogin);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('saveAdConfigBtn').addEventListener('click', saveAdConfig);
+        document.getElementById('refreshMessagesBtn').addEventListener('click', loadMessages);
+        document.getElementById('clearAllMessagesBtn').addEventListener('click', clearAllMessages);
+        document.getElementById('loginPassword').addEventListener('keypress', e => { if(e.key === 'Enter') attemptLogin(); });
+        
+        checkAuth();
+    </script>
+</body>
+</html>
