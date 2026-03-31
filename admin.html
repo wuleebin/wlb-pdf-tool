@@ -8,8 +8,9 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
         body { background: #1a2a3a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: white; border-radius: 32px; padding: 32px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .dashboard { max-width: 1200px; width: 100%; background: #f1f5f9; border-radius: 32px; overflow: hidden; }
+        .card, .dashboard { background: white; border-radius: 32px; overflow: hidden; }
+        .card { padding: 32px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .dashboard { max-width: 1200px; width: 100%; background: #f1f5f9; }
         .header { background: white; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
         .content { padding: 32px; }
         input, button { border-radius: 40px; padding: 10px 16px; border: 1px solid #cbd5e1; margin: 5px 0; width: 100%; }
@@ -18,18 +19,21 @@
         .stat-card { background: white; padding: 20px; border-radius: 20px; text-align: center; }
         .stat-number { font-size: 32px; font-weight: bold; color: #2c7da0; }
         .message-item { background: #fef9e6; border-left: 4px solid #f4b942; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; }
-        .info-tip { background: #eef2ff; padding: 12px; border-radius: 16px; margin-top: 16px; font-size: 13px; }
-        .error { color: #e53e3e; }
+        .info-tip { background: #eef2ff; padding: 12px; border-radius: 16px; margin-top: 16px; font-size: 13px; text-align: left; }
+        .error { color: #e53e3e; background: #ffe6e5; }
+        .warning { background: #fff3e0; color: #b45309; }
+        .success { background: #e0f2e9; color: #0f6e3f; }
     </style>
 </head>
 <body>
 <div id="login" class="card">
     <h2>🔐 WLB 云端后台</h2>
-    <input type="text" id="username" placeholder="wilink">
-    <input type="password" id="password" placeholder="wlb0404">
+    <input type="text" id="username" placeholder="用户名" value="wilink">
+    <input type="password" id="password" placeholder="密码" value="wlb0404">
     <button id="loginBtn">登录</button>
     <div id="loginError" class="info-tip error" style="display:none;"></div>
     <div id="dbStatus" class="info-tip">正在检测数据库连接...</div>
+    <div id="protocolWarning" class="info-tip warning" style="display:none;"></div>
 </div>
 
 <div id="dashboard" style="display:none;" class="dashboard">
@@ -59,17 +63,27 @@
 </div>
 
 <script>
-    // ========== Supabase 配置已填入 ==========
+    // ========== Supabase 配置 ==========
     const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
-    // ============================================
-    
     const ADMIN_USER = "wilink";
     const ADMIN_PASS = "wlb0404";
+    // ====================================
+
     let supabase;
     let interval;
 
-    // 初始化并测试数据库连接
+    // 检测是否通过 file:// 协议打开
+    function checkProtocol() {
+        if (window.location.protocol === 'file:') {
+            document.getElementById('protocolWarning').style.display = 'block';
+            document.getElementById('protocolWarning').innerHTML = '⚠️ 检测到您直接双击打开了文件（file:// 协议），这会导致跨域错误无法连接数据库。<br>请通过本地 HTTP 服务器访问（例如运行 <code>python -m http.server 8000</code> 后访问 <code>http://localhost:8000/admin.html</code>）或部署到 GitHub Pages。';
+            return false;
+        }
+        return true;
+    }
+
+    // 测试数据库连接
     async function testConnection() {
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -77,14 +91,20 @@
             const { data, error } = await supabase.from('stats').select('*').limit(1);
             
             if (error) {
-                document.getElementById('dbStatus').innerHTML = `❌ 数据库错误: ${error.message}`;
+                let errMsg = `❌ 数据库错误: ${error.message}`;
+                if (error.message.includes('relation "stats" does not exist')) {
+                    errMsg += '<br>💡 表 "stats" 不存在，请在 Supabase SQL Editor 中执行建表语句。';
+                } else if (error.message.includes('permission denied')) {
+                    errMsg += '<br>💡 权限不足，请在 Supabase 中关闭 RLS 或添加允许策略。';
+                }
+                document.getElementById('dbStatus').innerHTML = errMsg;
                 return false;
             }
             if (!data || data.length === 0) {
-                document.getElementById('dbStatus').innerHTML = `⚠️ 连接成功，但 stats 表为空，请执行建表语句。`;
-                return true; // 连接成功但无数据（允许登录）
+                document.getElementById('dbStatus').innerHTML = '⚠️ 连接成功，但 stats 表为空，请执行建表语句插入初始数据。';
+                return true; // 连接成功但无数据，允许登录
             }
-            document.getElementById('dbStatus').innerHTML = `✅ 数据库连接成功！`;
+            document.getElementById('dbStatus').innerHTML = '✅ 数据库连接成功！';
             return true;
         } catch (err) {
             document.getElementById('dbStatus').innerHTML = `❌ 连接异常: ${err.message}`;
@@ -165,16 +185,19 @@
         const password = document.getElementById('password').value;
         if (username !== ADMIN_USER || password !== ADMIN_PASS) {
             document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerText = '用户名或密码错误';
+            document.getElementById('loginError').innerHTML = '用户名或密码错误';
             return;
         }
         document.getElementById('loginError').style.display = 'none';
+
+        // 再次测试连接（确保数据库可用）
         const connected = await testConnection();
         if (!connected) {
             document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerText = '数据库连接失败，请检查配置';
+            document.getElementById('loginError').innerHTML = '数据库连接失败，请检查上方错误信息并修复后再登录。';
             return;
         }
+
         sessionStorage.setItem('wlb_admin_logged', 'true');
         document.getElementById('login').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
@@ -190,13 +213,14 @@
         testConnection(); // 重新显示连接状态
     }
 
-    // 页面加载时测试连接
-    testConnection();
-
-    // 检查是否已登录
-    if (sessionStorage.getItem('wlb_admin_logged') === 'true') {
-        login();
-    }
+    // 页面加载
+    window.onload = () => {
+        checkProtocol();
+        testConnection();
+        if (sessionStorage.getItem('wlb_admin_logged') === 'true') {
+            login();
+        }
+    };
 
     document.getElementById('loginBtn').onclick = login;
     document.getElementById('logoutBtn').onclick = logout;
