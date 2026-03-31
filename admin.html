@@ -63,17 +63,13 @@
 </div>
 
 <script>
-    // ========== Supabase 配置 ==========
     const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
     const ADMIN_USER = "wilink";
     const ADMIN_PASS = "wlb0404";
-    // ====================================
-
     let supabase;
     let interval;
 
-    // 检测是否通过 file:// 协议打开
     function checkProtocol() {
         if (window.location.protocol === 'file:') {
             document.getElementById('protocolWarning').style.display = 'block';
@@ -83,11 +79,9 @@
         return true;
     }
 
-    // 测试数据库连接
     async function testConnection() {
         try {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            // 尝试查询 stats 表
             const { data, error } = await supabase.from('stats').select('*').limit(1);
             
             if (error) {
@@ -102,7 +96,7 @@
             }
             if (!data || data.length === 0) {
                 document.getElementById('dbStatus').innerHTML = '⚠️ 连接成功，但 stats 表为空，请执行建表语句插入初始数据。';
-                return true; // 连接成功但无数据，允许登录
+                return true;
             }
             document.getElementById('dbStatus').innerHTML = '✅ 数据库连接成功！';
             return true;
@@ -190,7 +184,6 @@
         }
         document.getElementById('loginError').style.display = 'none';
 
-        // 再次测试连接（确保数据库可用）
         const connected = await testConnection();
         if (!connected) {
             document.getElementById('loginError').style.display = 'block';
@@ -210,10 +203,9 @@
         stopAutoRefresh();
         document.getElementById('login').style.display = 'block';
         document.getElementById('dashboard').style.display = 'none';
-        testConnection(); // 重新显示连接状态
+        testConnection();
     }
 
-    // 页面加载
     window.onload = () => {
         checkProtocol();
         testConnection();

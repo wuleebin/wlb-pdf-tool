@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WLBpdf工具包 · 云端版 | 图片转PDF | 合并PDF | PDF转图片</title>
+    <title>WLBpdf工具包 · 云端版</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* 样式与之前相同，此处省略以节省篇幅，请使用完整版 */
         * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
         body { background: #f0f4fa; margin: 0; padding: 28px 20px 60px; color: #0a1c2f; }
         .container { max-width: 1500px; margin: 0 auto; }
@@ -115,11 +116,8 @@
 </div>
 
 <script>
-    // ========== Supabase 配置已填入 ==========
     const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
-    // =========================================
-    
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
@@ -129,7 +127,6 @@
     let currentPdfForImage = null;
     let sortableGrid = null;
     
-    // 加载广告配置
     async function loadAdConfig() {
         const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
         if (error) { console.error('加载广告失败:', error); return; }
@@ -139,7 +136,6 @@
         }
     }
     
-    // 加载留言
     async function loadMessages() {
         const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
         if (error) { console.error('加载留言失败:', error); return; }
@@ -155,7 +151,6 @@
         container.innerHTML = html;
     }
     
-    // 发送留言
     async function sendMessage() {
         const text = document.getElementById('msgInput').value.trim();
         if (!text) { alert('请输入留言内容'); return; }
@@ -166,7 +161,6 @@
         alert('留言已发送！');
     }
     
-    // 更新统计（使用次数+1）
     async function incrementStat(type) {
         const { data, error } = await supabase.from('stats').select('*').limit(1);
         if (error) { console.error('获取统计失败:', error); return; }
@@ -183,7 +177,6 @@
     
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     
-    // 图片网格渲染
     function renderImageGrid() {
         const gridContainer = document.getElementById('gridPreviewList');
         if (!gridContainer) return;
