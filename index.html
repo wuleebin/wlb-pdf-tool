@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WLBpdf工具包 · 云端版</title>
+    <title>WLBpdf工具包 · 云端版 | 图片转PDF | 合并PDF | PDF转图片</title>
+    <!-- 依赖库 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* 样式与之前相同，此处省略以节省篇幅，请使用完整版 */
         * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Roboto', sans-serif; }
         body { background: #f0f4fa; margin: 0; padding: 28px 20px 60px; color: #0a1c2f; }
         .container { max-width: 1500px; margin: 0 auto; }
@@ -41,6 +41,7 @@
         .info-hint { font-size: 0.7rem; color: #5584a0; margin-top: 8px; }
         i { margin-right: 6px; }
         @media (max-width: 780px) { .footer-panel { flex-direction: column; } }
+        .error-toast { background: #fee2e2; color: #b91c1c; padding: 8px 16px; border-radius: 40px; margin-top: 8px; font-size: 0.75rem; }
     </style>
 </head>
 <body>
@@ -54,6 +55,7 @@
     <div class="sub">🖼️ 可视化图片转PDF · 🔗 合并PDF · 🖨️ PDF逐页导出高清图片 | 留言全局同步</div>
 
     <div class="card-grid">
+        <!-- 功能1 图片打包PDF -->
         <div class="card">
             <h2>🖼️ ① 图片打包PDF <span style="font-size:0.7rem;">拖拽排序·网格预览</span></h2>
             <div class="btn-group">
@@ -71,6 +73,7 @@
             <div class="info-hint">✔ 拖拽卡片可调整顺序，所见即所得</div>
         </div>
 
+        <!-- 功能2 合并PDF -->
         <div class="card">
             <h2>📑 ② 合并PDF文档</h2>
             <div class="btn-group">
@@ -84,6 +87,7 @@
             <button id="mergePdfBtnWLB" class="primary" style="background:#5f6caf;">🔗 合并并保存PDF</button>
         </div>
 
+        <!-- 功能3 PDF转图片 -->
         <div class="card">
             <h2>🖨️ ③ PDF → 图片</h2>
             <div class="btn-group">
@@ -98,12 +102,14 @@
         </div>
     </div>
 
+    <!-- 底部区域：广告栏 + 留言板 -->
     <div class="footer-panel">
         <div class="ad-section">
             <h3><i class="fas fa-ad"></i> 推广位</h3>
             <div id="adContentDisplay" style="margin-top: 12px; padding: 12px; background: #fef7e0; border-radius: 28px; text-align: center;">
                 <a href="#" id="adLink" target="_blank" style="text-decoration: none; font-weight: 600; color: #2c7da0;">加载中...</a>
             </div>
+            <div id="adError" class="error-toast" style="display:none;"></div>
         </div>
         <div class="message-section">
             <h3><i class="fas fa-envelope"></i> 留言板</h3>
@@ -116,67 +122,117 @@
 </div>
 
 <script>
+    // ========== Supabase 配置 ==========
     const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
+    let supabase;
+    try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch(e) { console.warn("Supabase init error", e); }
+
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     
+    // ---------- 本地状态 ----------
     let wlbImageFiles = [];
     let mergePdfList = [];
     let currentPdfForImage = null;
     let sortableGrid = null;
+
+    // ---------- 辅助函数 ----------
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     
+    async function saveWithPicker(blob, name) {
+        try {
+            if('showSaveFilePicker' in window) {
+                const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{accept: {'application/pdf': ['.pdf'], 'image/png': ['.png']}}] });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } else {
+                const a = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = name;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        } catch(e) { if(e.name !== 'AbortError') alert("保存失败: "+e.message); }
+    }
+
+    // 更新统计 (云端)
+    async function incrementStat(type) {
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase.from('stats').select('*').limit(1);
+            if (error) throw error;
+            if (data && data.length) {
+                const current = data[0];
+                let updates = {};
+                if (type === 'pdf') updates.pdf_from_images = (current.pdf_from_images || 0) + 1;
+                if (type === 'merge') updates.merge_pdf_count = (current.merge_pdf_count || 0) + 1;
+                if (type === 'image') updates.pdf_to_image_count = (current.pdf_to_image_count || 0) + 1;
+                updates.last_active = new Date().toISOString();
+                await supabase.from('stats').update(updates).eq('id', current.id);
+            }
+        } catch(e) { console.warn("统计更新失败", e); }
+    }
+
+    // 加载广告
     async function loadAdConfig() {
-        const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
-        if (error) { console.error('加载广告失败:', error); return; }
-        if (data && data.length > 0) {
-            document.getElementById('adLink').innerText = data[0].link_text;
-            document.getElementById('adLink').href = data[0].link_url;
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
+            if (error) throw error;
+            if (data && data.length) {
+                document.getElementById('adLink').innerText = data[0].link_text;
+                document.getElementById('adLink').href = data[0].link_url;
+                document.getElementById('adError').style.display = 'none';
+            }
+        } catch(e) {
+            console.warn("广告加载失败", e);
+            document.getElementById('adError').innerText = '广告加载失败，使用默认链接';
+            document.getElementById('adError').style.display = 'block';
+            document.getElementById('adLink').innerText = '⭐ 推荐工具：WLB智能办公助手';
+            document.getElementById('adLink').href = '#';
         }
     }
-    
+
+    // 加载留言
     async function loadMessages() {
-        const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
-        if (error) { console.error('加载留言失败:', error); return; }
-        const container = document.getElementById('msgListArea');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="info-hint">暂无留言，成为第一个留言的人</div>';
-            return;
-        }
-        let html = '';
-        data.forEach(msg => {
-            html += `<div class="message-item"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
-        });
-        container.innerHTML = html;
+        if (!supabase) return;
+        try {
+            const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
+            if (error) throw error;
+            const container = document.getElementById('msgListArea');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="info-hint">暂无留言，成为第一个留言的人</div>';
+                return;
+            }
+            let html = '';
+            data.forEach(msg => {
+                html += `<div class="message-item"><strong>📬 ${new Date(msg.time).toLocaleString()}</strong><br>${escapeHtml(msg.text)}</div>`;
+            });
+            container.innerHTML = html;
+        } catch(e) { console.warn("留言加载失败", e); }
     }
-    
+
+    // 发送留言
     async function sendMessage() {
         const text = document.getElementById('msgInput').value.trim();
         if (!text) { alert('请输入留言内容'); return; }
-        const { error } = await supabase.from('messages').insert([{ text: text, time: new Date().toISOString() }]);
-        if (error) { alert('发送失败: ' + error.message); return; }
-        document.getElementById('msgInput').value = '';
-        await loadMessages();
-        alert('留言已发送！');
-    }
-    
-    async function incrementStat(type) {
-        const { data, error } = await supabase.from('stats').select('*').limit(1);
-        if (error) { console.error('获取统计失败:', error); return; }
-        if (data && data.length > 0) {
-            const current = data[0];
-            let updates = {};
-            if (type === 'pdf') updates.pdf_from_images = (current.pdf_from_images || 0) + 1;
-            if (type === 'merge') updates.merge_pdf_count = (current.merge_pdf_count || 0) + 1;
-            if (type === 'image') updates.pdf_to_image_count = (current.pdf_to_image_count || 0) + 1;
-            updates.last_active = new Date().toISOString();
-            await supabase.from('stats').update(updates).eq('id', current.id);
+        if (!supabase) { alert('云端服务未连接，留言暂存本地（演示模式）'); return; }
+        try {
+            const { error } = await supabase.from('messages').insert([{ text: text, time: new Date().toISOString() }]);
+            if (error) throw error;
+            document.getElementById('msgInput').value = '';
+            await loadMessages();
+            alert('留言已发送！');
+        } catch(e) {
+            alert('发送失败: ' + e.message);
         }
     }
-    
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    
+
+    // ---------- 图片网格拖拽排序 ----------
     function renderImageGrid() {
         const gridContainer = document.getElementById('gridPreviewList');
         if (!gridContainer) return;
@@ -188,7 +244,13 @@
         let html = '';
         wlbImageFiles.forEach((file, idx) => {
             const previewUrl = URL.createObjectURL(file);
-            html += `<div class="image-card" data-idx="${idx}"><img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')"><div class="img-info"><span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span><button class="remove-img-btn" data-remove-idx="${idx}">✖</button></div></div>`;
+            html += `<div class="image-card" data-idx="${idx}">
+                        <img src="${previewUrl}" onload="URL.revokeObjectURL('${previewUrl}')">
+                        <div class="img-info">
+                            <span>${file.name.length > 14 ? file.name.slice(0,12)+'..' : file.name}</span>
+                            <button class="remove-img-btn" data-remove-idx="${idx}">✖</button>
+                        </div>
+                     </div>`;
         });
         gridContainer.innerHTML = html;
         document.querySelectorAll('.remove-img-btn').forEach(btn => {
@@ -210,14 +272,15 @@
             }
         });
     }
-    
+
     function addImageFiles(files) {
         if(!files.length) return;
         const imgs = Array.from(files).filter(f => f.type.startsWith('image/'));
         if(imgs.length) { wlbImageFiles.push(...imgs); renderImageGrid(); }
         else alert("不支持的图片格式");
     }
-    
+
+    // 生成 PDF (使用 jsPDF)
     async function generateWlbPdf() {
         if(wlbImageFiles.length === 0) { alert("请添加图片"); return; }
         if(typeof window.jspdf === 'undefined') {
@@ -241,20 +304,8 @@
         await saveWithPicker(blob, `WLB_图片包_${Date.now()}.pdf`);
         await incrementStat('pdf');
     }
-    
-    async function saveWithPicker(blob, name) {
-        try {
-            if('showSaveFilePicker' in window) {
-                const handle = await window.showSaveFilePicker({ suggestedName: name, types: [{accept: {'application/pdf': ['.pdf']}}] });
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-            } else {
-                const a=document.createElement('a'); const url=URL.createObjectURL(blob); a.href=url; a.download=name; a.click(); URL.revokeObjectURL(url);
-            }
-        } catch(e) { if(e.name !== 'AbortError') alert("保存失败"+e.message); }
-    }
-    
+
+    // 合并PDF
     async function mergePdfsAction() {
         if(mergePdfList.length===0){ alert("请添加PDF"); return; }
         const PDFLib = window.PDFLib;
@@ -269,7 +320,7 @@
         await saveWithPicker(new Blob([bytes],{type:'application/pdf'}), `WLB_合并_${Date.now()}.pdf`);
         await incrementStat('merge');
     }
-    
+
     function renderMergeUI() {
         const c = document.getElementById('pdfMergeListWLB');
         if(!mergePdfList.length){ c.innerHTML='<div class="info-hint" style="text-align:center;">暂无PDF</div>'; return; }
@@ -284,7 +335,8 @@
             });
         });
     }
-    
+
+    // PDF转图片
     async function pdfToImagesAction(pdfFile) {
         if(!pdfFile) return;
         const progress = document.getElementById('pdfConvertProgressWLB');
@@ -305,24 +357,46 @@
         await incrementStat('image');
         progress.innerText = `✅ 导出完成共${total}张`;
     }
-    
-    document.getElementById('selectImagesWLB').addEventListener('change',(e)=>{ addImageFiles(e.target.files); e.target.value=''; });
-    document.getElementById('appendImagesWLB').addEventListener('click',()=>document.getElementById('selectImagesWLB').click());
-    document.getElementById('clearImagesWLB').addEventListener('click',()=>{ if(confirm('清空所有图片？')){ wlbImageFiles=[]; renderImageGrid(); } });
-    document.getElementById('generatePdfFromImagesWLB').addEventListener('click', generateWlbPdf);
-    document.getElementById('mergePdfInputWLB').addEventListener('change',(e)=>{ if(e.target.files.length) { mergePdfList.push(...Array.from(e.target.files)); renderMergeUI(); } e.target.value=''; });
-    document.getElementById('clearMergeListWLB').addEventListener('click',()=>{ if(confirm('清空合并列表')){ mergePdfList=[]; renderMergeUI(); } });
-    document.getElementById('mergePdfBtnWLB').addEventListener('click', mergePdfsAction);
-    document.getElementById('pdfToImageInputWLB').addEventListener('change',(e)=>{ if(e.target.files[0]) { currentPdfForImage=e.target.files[0]; document.getElementById('pdfSelectedStatus').innerHTML=`📄 ${currentPdfForImage.name}`; } e.target.value=''; });
-    document.getElementById('convertPdfToImagesWLB').addEventListener('click',()=>{ if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
-    document.getElementById('sendMsgBtn').addEventListener('click', sendMessage);
-    
-    loadAdConfig();
-    loadMessages();
-    renderImageGrid();
-    renderMergeUI();
-    
-    setInterval(() => { loadAdConfig(); loadMessages(); }, 30000);
+
+    // ---------- 事件绑定 (确保元素存在) ----------
+    document.addEventListener('DOMContentLoaded', () => {
+        const selectBtn = document.getElementById('selectImagesWLB');
+        const appendBtn = document.getElementById('appendImagesWLB');
+        const clearBtn = document.getElementById('clearImagesWLB');
+        const generateBtn = document.getElementById('generatePdfFromImagesWLB');
+        const mergeInput = document.getElementById('mergePdfInputWLB');
+        const clearMergeBtn = document.getElementById('clearMergeListWLB');
+        const mergeBtn = document.getElementById('mergePdfBtnWLB');
+        const pdfInput = document.getElementById('pdfToImageInputWLB');
+        const convertBtn = document.getElementById('convertPdfToImagesWLB');
+        const sendMsgBtn = document.getElementById('sendMsgBtn');
+
+        if (selectBtn) selectBtn.addEventListener('change', (e) => { addImageFiles(e.target.files); e.target.value=''; });
+        if (appendBtn) appendBtn.addEventListener('click', () => selectBtn.click());
+        if (clearBtn) clearBtn.addEventListener('click', () => { if(confirm('清空所有图片？')){ wlbImageFiles=[]; renderImageGrid(); } });
+        if (generateBtn) generateBtn.addEventListener('click', generateWlbPdf);
+        
+        if (mergeInput) mergeInput.addEventListener('change', (e) => { if(e.target.files.length) { mergePdfList.push(...Array.from(e.target.files)); renderMergeUI(); } e.target.value=''; });
+        if (clearMergeBtn) clearMergeBtn.addEventListener('click', () => { if(confirm('清空合并列表')){ mergePdfList=[]; renderMergeUI(); } });
+        if (mergeBtn) mergeBtn.addEventListener('click', mergePdfsAction);
+        
+        if (pdfInput) pdfInput.addEventListener('change', (e) => { if(e.target.files[0]) { currentPdfForImage=e.target.files[0]; document.getElementById('pdfSelectedStatus').innerHTML=`📄 ${currentPdfForImage.name}`; } e.target.value=''; });
+        if (convertBtn) convertBtn.addEventListener('click', () => { if(currentPdfForImage) pdfToImagesAction(currentPdfForImage); else alert("请选择PDF"); });
+        
+        if (sendMsgBtn) sendMsgBtn.addEventListener('click', sendMessage);
+        
+        // 初始化渲染
+        renderImageGrid();
+        renderMergeUI();
+        if (supabase) {
+            loadAdConfig();
+            loadMessages();
+            setInterval(() => { loadAdConfig(); loadMessages(); }, 30000);
+        } else {
+            document.getElementById('adError').innerText = '云端服务未连接，广告和留言功能不可用，本地转换功能正常';
+            document.getElementById('adError').style.display = 'block';
+        }
+    });
 </script>
 </body>
 </html>
