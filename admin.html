@@ -1,225 +1,53 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WLB 云端后台 · 管理员</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
-        body { background: #1a2a3a; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card, .dashboard { background: white; border-radius: 32px; overflow: hidden; }
-        .card { padding: 32px; max-width: 500px; width: 100%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        .dashboard { max-width: 1200px; width: 100%; background: #f1f5f9; }
-        .header { background: white; padding: 20px 32px; display: flex; justify-content: space-between; align-items: center; }
-        .content { padding: 32px; }
-        input, button { border-radius: 40px; padding: 10px 16px; border: 1px solid #cbd5e1; margin: 5px 0; width: 100%; }
-        button { background: #2c7da0; color: white; cursor: pointer; }
-        .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 32px; }
-        .stat-card { background: white; padding: 20px; border-radius: 20px; text-align: center; }
-        .stat-number { font-size: 32px; font-weight: bold; color: #2c7da0; }
-        .message-item { background: #fef9e6; border-left: 4px solid #f4b942; padding: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; }
-        .info-tip { background: #eef2ff; padding: 12px; border-radius: 16px; margin-top: 16px; font-size: 13px; text-align: left; }
-        .error { color: #e53e3e; background: #ffe6e5; }
-        .warning { background: #fff3e0; color: #b45309; }
-        .success { background: #e0f2e9; color: #0f6e3f; }
-    </style>
-</head>
-<body>
-<div id="login" class="card">
-    <h2>🔐 WLB 云端后台</h2>
-    <input type="text" id="username" placeholder="用户名" value="wilink">
-    <input type="password" id="password" placeholder="密码" value="wlb0404">
-    <button id="loginBtn">登录</button>
-    <div id="loginError" class="info-tip error" style="display:none;"></div>
-    <div id="dbStatus" class="info-tip">正在检测数据库连接...</div>
-    <div id="protocolWarning" class="info-tip warning" style="display:none;"></div>
-</div>
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    
+    const SUPABASE_URL = 'https://你的项目ID.supabase.co'
+    const SUPABASE_KEY = '你的ANON_KEY'
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-<div id="dashboard" style="display:none;" class="dashboard">
-    <div class="header">
-        <h2>📊 WLB 云端后台</h2>
-        <button id="logoutBtn">退出</button>
-    </div>
-    <div class="content">
-        <div class="stat-grid">
-            <div class="stat-card"><div class="stat-number" id="statPdf">0</div><div>图片打包PDF</div></div>
-            <div class="stat-card"><div class="stat-number" id="statMerge">0</div><div>合并PDF</div></div>
-            <div class="stat-card"><div class="stat-number" id="statImg">0</div><div>PDF转图片</div></div>
-            <div class="stat-card"><div class="stat-number" id="lastActive">-</div><div>最后活跃</div></div>
-        </div>
-        <div style="background:white; border-radius:24px; padding:24px; margin-bottom:24px;">
-            <h3>📢 广告推送</h3>
-            <input type="text" id="adText" placeholder="广告文字">
-            <input type="url" id="adUrl" placeholder="广告链接">
-            <button id="saveAdBtn">推送到所有用户</button>
-            <div class="info-tip"><a href="#" id="previewAd" target="_blank">预览广告</a></div>
-        </div>
-        <div style="background:white; border-radius:24px; padding:24px;">
-            <h3>💬 留言板 <button id="refreshMsgBtn">刷新</button> <button id="clearAllMsgBtn" style="background:#e53e3e;">清空全部</button></h3>
-            <div id="msgList"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
-    const ADMIN_USER = "wilink";
-    const ADMIN_PASS = "wlb0404";
-    let supabase;
-    let interval;
-
-    function checkProtocol() {
-        if (window.location.protocol === 'file:') {
-            document.getElementById('protocolWarning').style.display = 'block';
-            document.getElementById('protocolWarning').innerHTML = '⚠️ 检测到您直接双击打开了文件（file:// 协议），这会导致跨域错误无法连接数据库。<br>请通过本地 HTTP 服务器访问（例如运行 <code>python -m http.server 8000</code> 后访问 <code>http://localhost:8000/admin.html</code>）或部署到 GitHub Pages。';
-            return false;
-        }
-        return true;
-    }
-
-    async function testConnection() {
-        try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            const { data, error } = await supabase.from('stats').select('*').limit(1);
-            
-            if (error) {
-                let errMsg = `❌ 数据库错误: ${error.message}`;
-                if (error.message.includes('relation "stats" does not exist')) {
-                    errMsg += '<br>💡 表 "stats" 不存在，请在 Supabase SQL Editor 中执行建表语句。';
-                } else if (error.message.includes('permission denied')) {
-                    errMsg += '<br>💡 权限不足，请在 Supabase 中关闭 RLS 或添加允许策略。';
-                }
-                document.getElementById('dbStatus').innerHTML = errMsg;
-                return false;
-            }
-            if (!data || data.length === 0) {
-                document.getElementById('dbStatus').innerHTML = '⚠️ 连接成功，但 stats 表为空，请执行建表语句插入初始数据。';
-                return true;
-            }
-            document.getElementById('dbStatus').innerHTML = '✅ 数据库连接成功！';
-            return true;
-        } catch (err) {
-            document.getElementById('dbStatus').innerHTML = `❌ 连接异常: ${err.message}`;
-            return false;
-        }
-    }
-
-    async function loadStats() {
-        const { data, error } = await supabase.from('stats').select('*').limit(1);
-        if (error) { console.error(error); return; }
-        if (data && data.length) {
-            document.getElementById('statPdf').innerText = data[0].pdf_from_images || 0;
-            document.getElementById('statMerge').innerText = data[0].merge_pdf_count || 0;
-            document.getElementById('statImg').innerText = data[0].pdf_to_image_count || 0;
-            document.getElementById('lastActive').innerText = data[0].last_active ? new Date(data[0].last_active).toLocaleString() : '-';
-        }
-    }
-
-    async function loadMessages() {
-        const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false });
-        if (error) { console.error(error); return; }
-        const container = document.getElementById('msgList');
-        if (!data || data.length === 0) {
-            container.innerHTML = '<div class="info-tip">暂无留言</div>';
-            return;
-        }
-        let html = '';
-        data.forEach(msg => {
-            html += `<div class="message-item">
-                        <div><div style="font-size:12px;">${new Date(msg.time).toLocaleString()}</div><div>${escapeHtml(msg.text)}</div></div>
-                        <button class="delMsg" data-id="${msg.id}">删除</button>
-                     </div>`;
-        });
-        container.innerHTML = html;
-        document.querySelectorAll('.delMsg').forEach(btn => {
-            btn.onclick = async () => {
-                await supabase.from('messages').delete().eq('id', btn.dataset.id);
-                loadMessages();
-            };
-        });
-    }
-
-    async function loadAd() {
-        const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
-        if (error) { console.error(error); return; }
-        if (data && data.length) {
-            document.getElementById('adText').value = data[0].link_text;
-            document.getElementById('adUrl').value = data[0].link_url;
-            document.getElementById('previewAd').innerText = data[0].link_text;
-            document.getElementById('previewAd').href = data[0].link_url;
-        }
-    }
-
-    async function saveAd() {
-        const text = document.getElementById('adText').value.trim();
-        const url = document.getElementById('adUrl').value.trim();
-        if (!text) return alert('广告文字不能为空');
-        const { error } = await supabase.from('ad_config').update({ link_text: text, link_url: url || '#', updated_at: new Date() }).eq('id', 1);
-        if (error) { alert('保存失败: ' + error.message); return; }
-        alert('已推送到所有用户');
-        loadAd();
-    }
-
-    async function clearAllMsgs() {
-        if (confirm('确定清空所有留言吗？')) {
-            await supabase.from('messages').delete().neq('id', 0);
-            loadMessages();
-        }
-    }
-
-    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-
-    function startAutoRefresh() { interval = setInterval(() => { loadStats(); loadMessages(); }, 5000); }
-    function stopAutoRefresh() { if(interval) clearInterval(interval); }
-
-    async function login() {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        if (username !== ADMIN_USER || password !== ADMIN_PASS) {
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerHTML = '用户名或密码错误';
-            return;
-        }
-        document.getElementById('loginError').style.display = 'none';
-
-        const connected = await testConnection();
-        if (!connected) {
-            document.getElementById('loginError').style.display = 'block';
-            document.getElementById('loginError').innerHTML = '数据库连接失败，请检查上方错误信息并修复后再登录。';
-            return;
+    // 加载所有管理数据
+    async function refreshAdminData() {
+        // A. 加载统计
+        const { data: stats } = await supabase.from('usage_stats').select('*');
+        if (stats) {
+            const getVal = (name) => stats.find(s => s.feature_name === name)?.count || 0;
+            document.getElementById('stat-1').innerText = getVal('img-to-pdf');
+            document.getElementById('stat-2').innerText = getVal('merge-pdf');
+            document.getElementById('stat-3').innerText = getVal('pdf-convert');
         }
 
-        sessionStorage.setItem('wlb_admin_logged', 'true');
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
-        loadStats(); loadMessages(); loadAd();
-        startAutoRefresh();
-    }
-
-    function logout() {
-        sessionStorage.removeItem('wlb_admin_logged');
-        stopAutoRefresh();
-        document.getElementById('login').style.display = 'block';
-        document.getElementById('dashboard').style.display = 'none';
-        testConnection();
-    }
-
-    window.onload = () => {
-        checkProtocol();
-        testConnection();
-        if (sessionStorage.getItem('wlb_admin_logged') === 'true') {
-            login();
+        // B. 加载广告配置
+        const { data: ads } = await supabase.from('ads_config').select('*').order('id', { ascending: true });
+        if (ads && ads.length >= 2) {
+            document.getElementById('ad1-img').value = ads[0].img_url;
+            document.getElementById('ad1-link').value = ads[0].link_url;
+            document.getElementById('ad2-img').value = ads[1].img_url;
+            document.getElementById('ad2-link').value = ads[1].link_url;
         }
+
+        // C. 加载留言
+        const { data: msgs } = await supabase.from('user_messages').select('*').order('created_at', { ascending: false });
+        const list = document.getElementById('message-list');
+        list.innerHTML = msgs.length ? msgs.map(m => `
+            <div class="border-b border-[#f1ece4] py-3 flex justify-between items-center">
+                <p class="text-xs text-[#5d574f]">${m.content}</p>
+                <span class="text-[9px] opacity-30">${new Date(m.created_at).toLocaleString()}</span>
+            </div>
+        `).join('') : '<p class="text-xs opacity-30 italic">暂无留言</p>';
+    }
+
+    // 保存广告修改
+    window.saveAds = async () => {
+        const updates = [
+            { id: 1, img_url: document.getElementById('ad1-img').value, link_url: document.getElementById('ad1-link').value },
+            { id: 2, img_url: document.getElementById('ad2-img').value, link_url: document.getElementById('ad2-link').value }
+        ];
+        
+        for (const item of updates) {
+            await supabase.from('ads_config').update(item).eq('id', item.id);
+        }
+        alert('广告内容已实时同步至前端！');
     };
 
-    document.getElementById('loginBtn').onclick = login;
-    document.getElementById('logoutBtn').onclick = logout;
-    document.getElementById('saveAdBtn').onclick = saveAd;
-    document.getElementById('refreshMsgBtn').onclick = loadMessages;
-    document.getElementById('clearAllMsgBtn').onclick = clearAllMsgs;
-    document.getElementById('password').addEventListener('keypress', e => { if(e.key === 'Enter') login(); });
+    refreshAdminData();
 </script>
-</body>
-</html>

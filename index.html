@@ -1,435 +1,48 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WLBpdf工具包 · 专业云端版</title>
+<script type="module">
+    // 1. 初始化 Supabase
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    // --- 请在此处填写你的 Supabase 信息 ---
+    const SUPABASE_URL = 'https://你的项目ID.supabase.co'
+    const SUPABASE_KEY = '你的ANON_KEY'
+    // ------------------------------------
 
-    <style>
-        :root { --primary: #2c7da0; --primary-hover: #1f6392; --bg: #f0f4fa; --card-bg: #ffffff; }
-        * { box-sizing: border-box; font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; }
-        body { background: var(--bg); margin: 0; padding: 28px 20px 60px; color: #0a1c2f; line-height: 1.6; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        
-        .tool-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
-        h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(135deg, #0f2b3d, #2c7da0); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0; }
-        .version-badge { background: #fff; padding: 4px 14px; border-radius: 60px; font-size: 0.85rem; color: var(--primary); border: 1px solid #dce7ef; }
-        .sub { color: #5584a0; margin-bottom: 30px; border-left: 4px solid var(--primary); padding-left: 16px; font-weight: 500; }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px; }
-        .card { background: var(--card-bg); border-radius: 28px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.06); padding: 1.8rem; border: 1px solid #e2edf2; transition: transform 0.2s; }
-        .card:hover { transform: translateY(-3px); }
-        .card h2 { font-size: 1.4rem; margin: 0 0 1.2rem 0; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f0f4f8; padding-bottom: 0.8rem; color: #1a3a5a; }
+    // 2. 统计函数：记录功能使用率
+    async function trackUsage(featureName) {
+        try {
+            await supabase.rpc('increment_usage', { row_id: featureName });
+        } catch (e) { console.error('Stats Error:', e); }
+    }
 
-        .btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
-        button, .file-label { 
-            background: #f8fafd; border: 1px solid #cbdde6; padding: 10px 20px; border-radius: 14px; 
-            font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; color: #2c4a63;
-            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        button:hover { background: #edf4f9; border-color: var(--primary); }
-        button.primary { background: var(--primary); color: white; border: none; width: 100%; margin-top: 10px; padding: 14px; font-size: 1rem; }
-        button.primary:hover { background: var(--primary-hover); box-shadow: 0 4px 12px rgba(44,125,160,0.3); }
-        button.danger { background: #fff5f5; border-color: #feb2b2; color: #c53030; }
-        button.danger:hover { background: #feb2b2; color: white; }
-
-        .image-gallery { background: #f9fbfe; border-radius: 20px; border: 1px dashed #cbdde6; min-height: 150px; padding: 15px; margin: 15px 0; }
-        .grid-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; max-height: 400px; overflow-y: auto; }
-        .image-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; cursor: grab; }
-        .image-card:active { cursor: grabbing; }
-        .image-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .img-info { padding: 5px 8px; font-size: 0.75rem; display: flex; justify-content: space-between; align-items: center; background: #fff; }
-        .remove-img-btn { color: #ff5e5e; border: none; background: none; cursor: pointer; font-size: 1rem; padding: 2px 5px; }
-
-        .list-item { display: flex; justify-content: space-between; background: #f8fafc; padding: 10px 16px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #edf2f7; font-size: 0.9rem; }
-        .footer-panel { margin-top: 50px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-        .footer-card { background: white; border-radius: 24px; padding: 20px; border: 1px solid #e2edf2; }
-        textarea { width: 100%; border: 1px solid #cbdde6; border-radius: 14px; padding: 12px; resize: vertical; margin-bottom: 10px; font-size: 0.9rem; }
-        .message-item { background: #fff9eb; border-left: 4px solid #f6ad55; padding: 12px; margin-bottom: 10px; border-radius: 8px; font-size: 0.85rem; }
-        .progress-bar { font-size: 0.85rem; color: var(--primary); font-weight: bold; margin-top: 10px; text-align: center; background: #eef2ff; padding: 6px; border-radius: 40px; display: none; }
-        .error-tip { color: #e53e3e; background: #fff5f5; padding: 6px 12px; border-radius: 30px; font-size: 0.75rem; margin-top: 8px; text-align: center; }
-
-        @media (max-width: 768px) {
-            .footer-panel { grid-template-columns: 1fr; }
-            .card-grid { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <header class="tool-header">
-        <h1>📦 WLBpdf工具包 <span style="font-weight: 300; font-size: 1rem;">| 专业云端版</span></h1>
-        <div class="version-badge"><i class="fas fa-cloud-upload-alt"></i> 全局统计 · 实时同步</div>
-    </header>
-    
-    <div class="sub">可视化处理 PDF 文档：支持图片打包、文件合并、高清无损转图，所有使用数据云端统计</div>
-
-    <div class="card-grid">
-        <!-- 图片打包 -->
-        <section class="card">
-            <h2><i class="fas fa-images"></i> ① 图片打包 PDF</h2>
-            <div class="btn-group">
-                <label class="file-label" style="background: #eef6ff;">
-                    <i class="fas fa-plus-circle"></i> 选择图片
-                    <input type="file" id="selectImagesWLB" multiple accept="image/*" style="display:none;">
-                </label>
-                <button id="clearImagesWLB" class="danger"><i class="fas fa-trash"></i> 清空</button>
-            </div>
-            <div class="image-gallery">
-                <div id="gridPreviewList" class="grid-preview">
-                    <div style="grid-column: 1/-1; text-align: center; color: #a0aec0; padding: 40px;">💡 拖拽图片可调整顺序</div>
-                </div>
-            </div>
-            <button id="generatePdfBtn" class="primary"><i class="fas fa-file-export"></i> 生成并保存 PDF</button>
-            <div id="imgProgress" class="progress-bar"></div>
-        </section>
-
-        <!-- 合并 PDF -->
-        <section class="card">
-            <h2><i class="fas fa-layer-group"></i> ② 合并 PDF 文档</h2>
-            <div class="btn-group">
-                <label class="file-label">
-                    <i class="fas fa-file-medical"></i> 添加 PDF
-                    <input type="file" id="mergePdfInput" multiple accept="application/pdf" style="display:none;">
-                </label>
-                <button id="clearMergeBtn" class="danger">清空列表</button>
-            </div>
-            <div id="pdfMergeList" style="min-height: 185px; max-height: 300px; overflow-y: auto; margin: 15px 0;"></div>
-            <button id="startMergeBtn" class="primary" style="background: #5a67d8;"><i class="fas fa-link"></i> 立即合并文件</button>
-            <div id="mergeProgress" class="progress-bar"></div>
-        </section>
-
-        <!-- PDF 转图片 -->
-        <section class="card">
-            <h2><i class="fas fa-file-image"></i> ③ PDF 逐页转图片</h2>
-            <div class="btn-group">
-                <label class="file-label" style="width: 100%;">
-                    <i class="fas fa-search"></i> 选择待转换 PDF
-                    <input type="file" id="pdfToImageInput" accept="application/pdf" style="display:none;">
-                </label>
-            </div>
-            <div id="pdfFileInfo" style="background: #f7fafc; padding: 15px; border-radius: 15px; margin: 15px 0; font-size: 0.9rem;">
-                <p id="selectedFileName">尚未选择文件</p>
-                <p id="selectedFilePages" style="color: #718096;"></p>
-            </div>
-            <button id="startConvertBtn" class="primary" style="background: #ed8936;"><i class="fas fa-download"></i> 导出为 ZIP 压缩包</button>
-            <div id="convertProgress" class="progress-bar"></div>
-        </section>
-    </div>
-
-    <footer class="footer-panel">
-        <div class="footer-card">
-            <h3><i class="fas fa-bullhorn"></i> 公告板</h3>
-            <div id="adArea" style="height: 120px; display: flex; align-items: center; justify-content: center; background: #ebf8ff; border-radius: 15px; border: 1px solid #bee3f8;">
-                <a href="#" id="adLink" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: bold;">正在同步最新资讯...</a>
-            </div>
-        </div>
-        <div class="footer-card">
-            <h3><i class="fas fa-comment-dots"></i> 留言反馈</h3>
-            <textarea id="msgInput" rows="3" placeholder="您的建议是我们前进的动力..."></textarea>
-            <button id="sendMsgBtn" style="width: 100%; background: var(--primary); color: white; border: none; border-radius: 10px; padding: 10px;">提交留言</button>
-            <div id="msgDisplay" style="margin-top: 15px; max-height: 150px; overflow-y: auto;"></div>
-        </div>
-    </footer>
-</div>
-
-<script>
-    // ========== Supabase 配置 ==========
-    const SUPABASE_URL = "https://kfqgwpgdziucqzivoryh.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmcWd3cGdkeml1Y3F6aXZvcnloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4ODU3NDIsImV4cCI6MjA5MDQ2MTc0Mn0.lSIzQMS47D7iacM_IrUrGc5y2fuV0wHKrzHYo6EwHsA";
-    let supabase = null;
-    try { supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); } catch(e) { console.warn("Supabase init failed", e); }
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    // ---------- 全局状态 ----------
-    let state = {
-        images: [],          // File 对象数组
-        mergeList: [],       // File 对象数组
-        pdfToConvert: null,
-        sortableInstance: null
-    };
-
-    // ---------- 辅助函数 ----------
-    const $ = id => document.getElementById(id);
-    const escapeHtml = str => str ? str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) : '';
-
-    // 显示/隐藏进度条
-    function setProgress(elementId, text, show = true) {
-        const el = $(elementId);
-        if (el) {
-            el.innerText = text;
-            el.style.display = show ? 'block' : 'none';
+    // 3. 加载广告内容
+    async function loadAds() {
+        const { data, error } = await supabase.from('ads_config').select('*').order('id', { ascending: true });
+        if (data && data.length >= 2) {
+            document.getElementById('ad-img-1').src = data[0].img_url;
+            document.getElementById('ad-link-1').href = data[0].link_url;
+            document.getElementById('ad-img-2').src = data[1].img_url;
+            document.getElementById('ad-link-2').href = data[1].link_url;
         }
     }
 
-    // 通用保存文件（支持 File System Access API 降级）
-    async function saveBlob(blob, filename) {
-        if (window.showSaveFilePicker) {
-            try {
-                const handle = await window.showSaveFilePicker({ suggestedName: filename });
-                const writable = await handle.createWritable();
-                await writable.write(blob);
-                await writable.close();
-                return true;
-            } catch (err) {
-                if (err.name === 'AbortError') return false;
-            }
-        }
-        const a = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(url);
-        return true;
-    }
-
-    // ========== 云端统计上报 ==========
-    async function incrementStat(type) {
-        if (!supabase) return;
-        try {
-            const { data, error } = await supabase.from('stats').select('*').limit(1);
-            if (error) throw error;
-            if (data && data.length) {
-                const current = data[0];
-                let updates = {};
-                if (type === 'pdf') updates.pdf_from_images = (current.pdf_from_images || 0) + 1;
-                if (type === 'merge') updates.merge_pdf_count = (current.merge_pdf_count || 0) + 1;
-                if (type === 'image') updates.pdf_to_image_count = (current.pdf_to_image_count || 0) + 1;
-                updates.last_active = new Date().toISOString();
-                await supabase.from('stats').update(updates).eq('id', current.id);
-            }
-        } catch(e) { console.warn("统计上报失败", e); }
-    }
-
-    // ========== 模块 1：图片打包（带拖拽排序修复） ==========
-    function renderImageGrid() {
-        const container = $('gridPreviewList');
-        if (state.images.length === 0) {
-            container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #a0aec0; padding: 40px;">💡 拖拽图片可调整顺序</div>';
-            if (state.sortableInstance) state.sortableInstance.destroy();
-            state.sortableInstance = null;
-            return;
-        }
-        container.innerHTML = state.images.map((img, i) => `
-            <div class="image-card" data-index="${i}">
-                <img src="${URL.createObjectURL(img)}" onload="URL.revokeObjectURL(this.src)">
-                <div class="img-info">
-                    <span>${escapeHtml(img.name.slice(0, 10))}</span>
-                    <button class="remove-img-btn" data-index="${i}">×</button>
-                </div>
-            </div>
-        `).join('');
-
-        // 重新绑定删除事件
-        document.querySelectorAll('.remove-img-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = parseInt(btn.dataset.index);
-                state.images.splice(idx, 1);
-                renderImageGrid();
-            });
-        });
-
-        // 重新初始化 Sortable
-        if (state.sortableInstance) state.sortableInstance.destroy();
-        state.sortableInstance = new Sortable(container, {
-            animation: 150,
-            onEnd: (evt) => {
-                const moved = state.images.splice(evt.oldIndex, 1)[0];
-                state.images.splice(evt.newIndex, 0, moved);
-                renderImageGrid();  // 刷新顺序
-            }
-        });
-    }
-
-    $('selectImagesWLB').onchange = (e) => {
-        if (e.target.files.length) {
-            state.images.push(...Array.from(e.target.files));
-            renderImageGrid();
-        }
-        e.target.value = '';
-    };
-    $('clearImagesWLB').onclick = () => { if(confirm('清空所有图片？')) { state.images = []; renderImageGrid(); } };
-
-    $('generatePdfBtn').onclick = async () => {
-        if (!state.images.length) return alert('请先添加图片');
-        setProgress('imgProgress', '正在生成 PDF，请稍候...', true);
-        try {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF();
-            for (let i = 0; i < state.images.length; i++) {
-                if (i > 0) pdf.addPage();
-                const dataUrl = await new Promise(r => {
-                    const fr = new FileReader();
-                    fr.onload = e => r(e.target.result);
-                    fr.readAsDataURL(state.images[i]);
-                });
-                const imgProps = pdf.getImageProperties(dataUrl);
-                const pdfW = pdf.internal.pageSize.getWidth();
-                const pdfH = pdf.internal.pageSize.getHeight();
-                const ratio = Math.min(pdfW / imgProps.width, pdfH / imgProps.height);
-                pdf.addImage(dataUrl, 'JPEG', (pdfW - imgProps.width * ratio) / 2, (pdfH - imgProps.height * ratio) / 2, imgProps.width * ratio, imgProps.height * ratio);
-            }
-            const blob = pdf.output('blob');
-            await saveBlob(blob, `WLB_图片包_${Date.now()}.pdf`);
-            await incrementStat('pdf');
-            setProgress('imgProgress', '✅ 生成成功！', false);
-            setTimeout(() => setProgress('imgProgress', '', false), 2000);
-        } catch(e) {
-            alert('生成失败：' + e.message);
-            setProgress('imgProgress', '', false);
+    // 4. 提交留言
+    window.submitMessage = async () => {
+        const content = document.getElementById('msg-input').value;
+        if (!content) return alert('请输入内容');
+        const { error } = await supabase.from('user_messages').insert([{ content }]);
+        if (!error) {
+            alert('WLB 已收到您的反馈！');
+            document.getElementById('msg-input').value = '';
         }
     };
 
-    // ========== 模块 2：合并 PDF ==========
-    function renderMergeList() {
-        const container = $('pdfMergeList');
-        if (state.mergeList.length === 0) {
-            container.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 60px;">暂未选择文件</div>';
-            return;
-        }
-        container.innerHTML = state.mergeList.map((f, i) => `
-            <div class="list-item">
-                <span><i class="far fa-file-pdf"></i> ${escapeHtml(f.name)}</span>
-                <span onclick="removeMergeItem(${i})" style="color:red; cursor:pointer;">移除</span>
-            </div>
-        `).join('');
-    }
-    window.removeMergeItem = (idx) => { state.mergeList.splice(idx, 1); renderMergeList(); };
-    $('mergePdfInput').onchange = (e) => {
-        if (e.target.files.length) {
-            state.mergeList.push(...Array.from(e.target.files));
-            renderMergeList();
-        }
-        e.target.value = '';
-    };
-    $('clearMergeBtn').onclick = () => { if(confirm('清空合并列表？')) { state.mergeList = []; renderMergeList(); } };
-    $('startMergeBtn').onclick = async () => {
-        if (state.mergeList.length < 2) return alert('请至少选择两个 PDF 文件');
-        setProgress('mergeProgress', '合并中...', true);
-        try {
-            const mergedPdf = await PDFLib.PDFDocument.create();
-            for (const file of state.mergeList) {
-                const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
-                const pages = await mergedPdf.copyPages(doc, doc.getPageIndices());
-                pages.forEach(p => mergedPdf.addPage(p));
-            }
-            const bytes = await mergedPdf.save();
-            await saveBlob(new Blob([bytes]), `WLB_Merged_${Date.now()}.pdf`);
-            await incrementStat('merge');
-            setProgress('mergeProgress', '✅ 合并完成', false);
-        } catch(e) {
-            alert('合并失败：' + e.message);
-            setProgress('mergeProgress', '', false);
-        }
-    };
+    // 5. 挂载统计到按钮逻辑中 (以生成PDF为例)
+    // 在原本的 generatePDF() 结尾处调用： await trackUsage('img-to-pdf');
+    // 在 mergePDFs() 结尾处调用： await trackUsage('merge-pdf');
+    // 在 pdfToImagesZip() 结尾处调用： await trackUsage('pdf-convert');
 
-    // ========== 模块 3：PDF 转图片 + ZIP 打包 ==========
-    $('pdfToImageInput').onchange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        state.pdfToConvert = file;
-        $('selectedFileName').innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(file.name)}`;
-        try {
-            const doc = await pdfjsLib.getDocument(await file.arrayBuffer()).promise;
-            $('selectedFilePages').innerHTML = `📄 共计 ${doc.numPages} 页，将导出为 PNG 并打包为 ZIP`;
-        } catch(e) {
-            $('selectedFilePages').innerHTML = '❌ 无法解析 PDF 文件';
-        }
-    };
-
-    $('startConvertBtn').onclick = async () => {
-        if (!state.pdfToConvert) return alert('请先选择 PDF 文件');
-        setProgress('convertProgress', '正在解析 PDF...', true);
-        try {
-            const zip = new JSZip();
-            const arrayBuffer = await state.pdfToConvert.arrayBuffer();
-            const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const total = pdfDoc.numPages;
-            for (let i = 1; i <= total; i++) {
-                setProgress('convertProgress', `转换中 ${i}/${total} 页...`, true);
-                const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: 2.5 });
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                const context = canvas.getContext('2d');
-                await page.render({ canvasContext: context, viewport }).promise;
-                const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
-                const fileName = `${state.pdfToConvert.name.replace(/\.pdf$/i, '')}_page${i}.png`;
-                zip.file(fileName, blob);
-            }
-            const zipBlob = await zip.generateAsync({ type: 'blob' });
-            await saveBlob(zipBlob, `${state.pdfToConvert.name.replace(/\.pdf$/i, '')}_图片包.zip`);
-            await incrementStat('image');
-            setProgress('convertProgress', '✅ 导出完成！', false);
-        } catch(e) {
-            alert('转换失败：' + e.message);
-            setProgress('convertProgress', '', false);
-        }
-    };
-
-    // ========== 云端数据同步（留言 + 广告） ==========
-    async function loadMessages() {
-        if (!supabase) return;
-        try {
-            const { data, error } = await supabase.from('messages').select('*').order('time', { ascending: false }).limit(10);
-            if (error) throw error;
-            if (data) {
-                $('msgDisplay').innerHTML = data.map(m => `
-                    <div class="message-item">
-                        <strong>${new Date(m.time).toLocaleString()}</strong><br>
-                        ${escapeHtml(m.text)}
-                    </div>
-                `).join('');
-                if (data.length === 0) $('msgDisplay').innerHTML = '<div style="text-align:center;color:#a0aec0;">暂无留言，做第一个反馈的人</div>';
-            }
-        } catch(e) { console.warn('留言同步失败', e); }
-    }
-
-    async function loadAd() {
-        if (!supabase) return;
-        try {
-            const { data, error } = await supabase.from('ad_config').select('link_text, link_url').order('id', { ascending: false }).limit(1);
-            if (error) throw error;
-            if (data && data[0]) {
-                $('adLink').innerText = data[0].link_text;
-                $('adLink').href = data[0].link_url;
-            }
-        } catch(e) { console.warn('广告同步失败', e); }
-    }
-
-    $('sendMsgBtn').onclick = async () => {
-        const text = $('msgInput').value.trim();
-        if (!text) return alert('请输入留言内容');
-        if (!supabase) return alert('云端服务暂不可用，请稍后再试');
-        try {
-            await supabase.from('messages').insert([{ text, time: new Date().toISOString() }]);
-            $('msgInput').value = '';
-            loadMessages();
-            alert('留言已提交，感谢反馈！');
-        } catch(e) {
-            alert('提交失败：' + e.message);
-        }
-    };
-
-    // 初始化所有
-    renderImageGrid();
-    renderMergeList();
-    loadMessages();
-    loadAd();
-    setInterval(() => { loadMessages(); loadAd(); }, 60000);
+    // 页面加载时初始化
+    loadAds();
 </script>
-
-</body>
-</html>
